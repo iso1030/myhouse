@@ -1,0 +1,46 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>WS-Slideshow 2</title>
+</head>
+
+<body>
+
+	<div id="flashcontent">
+		<p>To use WS-Slideshow update your 
+	    <a href="http://www.adobe.com/go/getflashplayer" class="error">Flash Player Plugin</a>, 
+	    please. You have to install the version 10 or later.</p>
+	</div>
+
+	<script type="text/javascript" src="swfobject.js"></script>
+	<script type="text/javascript">		
+		//  <![CDATA[	
+		var flashvars = {
+			XMLPath: "/house/slides/39"
+		};
+	
+		var params = {
+			quality: "best",
+			allowFullScreen: "true",
+			bgcolor: "#000000"
+		};
+		var attributes = {
+			id: "ws-slideshow",
+			name: "ws-slideshow"
+		};
+
+		swfobject.embedSWF(	"ws-slideshow.swf", 
+							"flashcontent", 
+							"960", 
+							"500", 
+							"10.0",
+							null, 
+							flashvars, 
+							params, 
+							attributes);
+		// ]]>			
+	</script>
+
+</body>
+</html>
