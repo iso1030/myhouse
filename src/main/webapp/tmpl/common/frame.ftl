@@ -1,4 +1,5 @@
 <#assign ctx = "">
+<#assign host = "">
 
 <#macro pangu>
 <!doctype html>

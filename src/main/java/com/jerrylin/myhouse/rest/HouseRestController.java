@@ -1,6 +1,8 @@
 package com.jerrylin.myhouse.rest;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.util.ArrayList;
@@ -40,6 +42,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 import com.jerrylin.myhouse.entity.House;
 import com.jerrylin.myhouse.entity.Image;
 import com.jerrylin.myhouse.service.AppConfigService;
+import com.jerrylin.myhouse.service.FileService;
 import com.jerrylin.myhouse.service.house.HouseService;
 import com.jerrylin.myhouse.service.house.ImageService;
 import com.jerrylin.myhouse.util.UrlGenerator;
@@ -64,6 +67,9 @@ public class HouseRestController {
 	
 	@Autowired
 	private AppConfigService appConfigService;
+	
+	@Autowired
+	private FileService fileService;
 
 	@Autowired
 	private Validator validator;
@@ -92,6 +98,8 @@ public class HouseRestController {
 				d3images.add(image);
 			}
 		}
+//		List<Image> d2imageList = fileService.getHouseImageFiles(id, Image.D2);
+//		List<Image> d3imageList = fileService.getHouseImageFiles(id, Image.D3);
 		house.setD2images(d2images);
 		house.setD3images(d3images);
 		house.setDownloadUrl(UrlGenerator.getHouseUrl(house.getUid(), house.getId()));
@@ -151,6 +159,55 @@ public class HouseRestController {
 		return house;
 	}
 	
+	@RequestMapping(value = "/pack2", method = {RequestMethod.POST, RequestMethod.GET}, produces = MediaTypes.JSON_UTF_8)
+	public Map<String, Object> pack2(HttpServletRequest request, HttpServletResponse response,
+			@RequestParam(value = "id", defaultValue = "0") long houseId) {
+		Map<String, Object> result = new HashMap<String, Object>();
+		if (houseId <= 0) {
+			result.put("code", 400);
+			result.put("msg", "无效的房屋id");
+			return result;
+		}
+		House house = houseService.getHouse(houseId);
+		if (house == null) {
+			result.put("code", 404);
+			result.put("msg", "房屋信息不存在");
+			return result;
+		}
+		
+		String packageDir = appConfigService.getPackageDir();
+		String filepath = File.separator + "ht" + houseId;
+		File targetDir = new File(packageDir + filepath);
+		if (!targetDir.exists() || !targetDir.isDirectory()) {
+			targetDir.mkdirs();
+		}
+		String filename = Identities.uuid2() + ".zip";
+		String realname = filepath + File.separator + filename;
+		try {
+			List<String> files = new ArrayList<String>();
+			files.add("/Users/linhui/Documents/workspace/myhouse/src/main/webapp/upload/ht100/d3/01_p (2 - 2).jpg");
+			files.add("/Users/linhui/Documents/workspace/myhouse/src/main/webapp/upload/ht100/d3/中文名.jpg");
+			
+			ZipFile zipFile = new ZipFile(packageDir + realname);
+			for (String file : files) {
+				File f = new File(file);
+				ZipParameters parameters = new ZipParameters();
+				parameters.setCompressionMethod(Zip4jConstants.COMP_DEFLATE);
+				parameters.setCompressionLevel(Zip4jConstants.DEFLATE_LEVEL_NORMAL);
+				parameters.setFileNameInZip("/test/a/" + f.getName());
+				parameters.setSourceExternalStream(true);
+
+				zipFile.addStream(new FileInputStream(f), parameters);
+			}
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (ZipException e) {
+			e.printStackTrace();
+		}
+		
+		return result;
+	}
+	
 	@RequestMapping(value = "/pack", method = RequestMethod.POST, produces = MediaTypes.JSON_UTF_8)
 	public Map<String, Object> pack(HttpServletRequest request, HttpServletResponse response,
 			@RequestParam(value = "id", defaultValue = "0") long houseId) {
@@ -160,8 +217,7 @@ public class HouseRestController {
 			result.put("msg", "无效的房屋id");
 			return result;
 		}
-		String uploadDir = appConfigService.getUploadDir();
-		String houseDir = uploadDir + File.separator + String.valueOf(houseId);
+		String houseDir = fileService.getHouseDir(houseId);
 		File file = new File(houseDir);
 		if (!file.exists() || !file.isDirectory()) {
 			result.put("code", 404);
@@ -174,10 +230,10 @@ public class HouseRestController {
 		parameters.setCompressionMethod(Zip4jConstants.COMP_DEFLATE);			// 压缩方式
 		parameters.setCompressionLevel(Zip4jConstants.DEFLATE_LEVEL_NORMAL);	// 压缩级别
 		try {
-			String filepath = File.separator + String.valueOf(houseId);
+			String filepath = File.separator + "ht" + String.valueOf(houseId);
 			File targetDir = new File(packageDir + filepath);
 			if (!targetDir.exists() || !targetDir.isDirectory()) {
-				targetDir.mkdir();
+				targetDir.mkdirs();
 			}
 			String filename = Identities.uuid2() + ".zip";
 			String realname = filepath + File.separator + filename;

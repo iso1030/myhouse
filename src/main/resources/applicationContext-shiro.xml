@@ -27,7 +27,8 @@
 				/logout = logout
 				/static/** = anon
 				/download/** = anon
-				/house/slides/** = anon
+				/vtour/** = anon
+				/house/xml/** = anon
 				/api/** = anon
 				/register/** = anon
 				/admin/** = roles[admin]

@@ -25,6 +25,10 @@ public class ImageService {
 		return imageDao.findOne(id);
 	}
 	
+	public void addImages(List<Image> images) {
+		imageDao.save(images);
+	}
+	
 	public boolean saveImage(Image entity) {
 		imageDao.save(entity);
 		// TODO write to file system

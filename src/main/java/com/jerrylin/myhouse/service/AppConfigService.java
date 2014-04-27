@@ -6,6 +6,9 @@ import org.springframework.stereotype.Component;
 @Component("appConfigService")
 public class AppConfigService {
 	
+	@Value("${app.tmp_dir}")
+	private String tmpDir;
+	
 	@Value("${app.upload_dir}")
 	private String uploadDir;
 	
@@ -29,6 +32,10 @@ public class AppConfigService {
 	
 	@Value("${app.banner_prefix}")
 	private String bannerPrefix;
+	
+	public String getTmpDir() {
+		return this.tmpDir;
+	}
 	
 	/**
 	 * 获取应用上传目录

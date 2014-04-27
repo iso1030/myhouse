@@ -103,10 +103,13 @@ public class UserService {
 		UserProfile userProfile = userProfileDao.findOne(userId);
 		UserAccount userAccount = userAccountDao.findOne(userId);
 
-		User user = new User(userProfile);
-		user.setCreateTime(userAccount.getCreateTime());
-		user.setType(userAccount.getType());
-		return user;
+		if (userProfile != null) {
+			User user = new User(userProfile);
+			user.setCreateTime(userAccount.getCreateTime());
+			user.setType(userAccount.getType());
+			return user;
+		}
+		return null;
 	}
 	/**
 	 * 分页查询用户信息

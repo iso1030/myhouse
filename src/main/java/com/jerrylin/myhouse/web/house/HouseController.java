@@ -14,23 +14,30 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authz.annotation.RequiresRoles;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.ui.ModelMap;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.multipart.MultipartHttpServletRequest;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.jerrylin.myhouse.entity.House;
 import com.jerrylin.myhouse.entity.Image;
+import com.jerrylin.myhouse.service.AppConfigService;
+import com.jerrylin.myhouse.service.FileService;
 import com.jerrylin.myhouse.service.account.ShiroDbRealm.ShiroUser;
 import com.jerrylin.myhouse.service.house.HouseService;
 import com.jerrylin.myhouse.service.house.ImageService;
@@ -70,7 +77,34 @@ public class HouseController {
 	@Autowired
 	private ImageService imageService;
 	
-	@RequestMapping(value = "/slides/{houseId}")
+	@Autowired
+	private FileService fileService;
+	
+	@Autowired
+	private AppConfigService appConfigService;
+
+	@RequestMapping(value = "/xml/krpano/{houseId}")
+	public ModelAndView krpanoXml(HttpServletRequest request, HttpServletResponse response, ModelMap modelMap,
+			@PathVariable(value = "houseId") long houseId) {
+		if (houseId > 0) {
+			House house = houseService.getHouse(houseId);
+			modelMap.put("house", house);
+			List<Image> images = imageService.getHouseImage(house.getId());
+			List<Image> d3images = new ArrayList<Image>();
+			
+			for (Image image : images) {
+				if (image.getType() == Image.D2) {
+				} else if (image.getType() == Image.D3) {
+					d3images.add(image);
+				}
+			}
+			modelMap.put("d3images", d3images);
+		}
+		response.setHeader("Content-Type", MediaTypes.APPLICATION_XML_UTF_8);
+		return new ModelAndView("/tmpl/house/krpano");
+	}
+	
+	@RequestMapping(value = "/xml/slides/{houseId}")
 	public ModelAndView slideXml(HttpServletRequest request, HttpServletResponse response, Model model,
 			@PathVariable(value = "houseId") long houseId) {
 		if (houseId > 0) {
@@ -89,6 +123,42 @@ public class HouseController {
 		}
 		response.setHeader("Content-Type", MediaTypes.APPLICATION_XML_UTF_8);
 		return new ModelAndView("/tmpl/house/slides");
+	}
+	
+	@RequestMapping(value = "/uploadimages", method= RequestMethod.POST, produces = MediaTypes.JSON_UTF_8)
+	@ResponseBody
+	public List<Image> uploadImages(
+			@RequestParam(value = "id", defaultValue = "0") long houseId,
+			@RequestParam(value = "type", defaultValue = "2") int type,
+			MultipartHttpServletRequest request, HttpServletResponse response) {
+		MultipartFile file = request.getFile("fileupload");
+		if (file == null)
+			return null;
+		
+		List<Image> images = fileService.addHouseImage(houseId, type, file);
+		if (images != null && images.size() > 0)
+			imageService.addImages(images);
+		return images;
+	}
+	
+	@RequestMapping(value = "/deleteimage", produces = MediaTypes.JSON_UTF_8)
+	@ResponseBody
+	public void deleteImage(
+			@RequestParam(value = "imageId", defaultValue = "0") long imageId,
+			@RequestParam(value = "houseId", defaultValue = "0") long houseId,
+			@RequestParam(value = "type", defaultValue = "2") int type,
+			@RequestParam(value = "file", defaultValue = "") String filename,
+			HttpServletRequest request, HttpServletResponse response) {
+		if (imageId > 0) {
+			Image image = imageService.getImage(imageId);
+			if (image != null) {
+				imageService.deleteImage(image.getId());
+				fileService.deleteHouseImage(image.getHid(), image.getType(), image.getName());
+			}
+		}
+		if (houseId <= 0 || (type != Image.D2 && type != Image.D3) || StringUtils.isBlank(filename))
+			return;
+		this.fileService.deleteHouseImage(houseId, type, filename);
 	}
 	
 	@RequestMapping(value = "/download", method = RequestMethod.GET)
@@ -111,27 +181,22 @@ public class HouseController {
 			Page<House> houses = houseService.getHouse(pageNumber, pageSize);
 			model.addAttribute("page", houses);
 		}
-//		Map<String, Object> searchParams = Servlets.getParametersStartingWith(request, "search_");
-//		Long userId = getCurrentUserId();
-
-//		Page<House> houses = houseService.getAllHouse();
-//		Page<House> tasks = taskService.getUserHouse(userId, searchParams, pageNumber, pageSize, sortType);
-//
-//		model.addAttribute("tasks", tasks);
-//		model.addAttribute("sortType", sortType);
-//		model.addAttribute("sortTypes", sortTypes);
-//		// 将搜索条件编码成字符串，用于排序，分页的URL
-//		model.addAttribute("searchParams", Servlets.encodeParameterStringWithPrefix(searchParams, "search_"));
 
 		return new ModelAndView("/tmpl/house/list");
 	}
 
 	@RequestMapping(value = "/edit", method = RequestMethod.GET)
-	public ModelAndView edit(
-			@RequestParam(value = "houseId", defaultValue = "-1") long houseId, Model model) {
-		if (houseId > 0) {
-			House house = houseService.getHouse(houseId);
-			model.addAttribute("house", house);
+	public ModelAndView edit(@RequestParam(value = "houseId", defaultValue = "-1") long houseId,
+			HttpServletRequest request, HttpServletResponse response, ModelMap modelMap) {
+//		if (houseId <= 0) {
+//			response.setStatus(HttpStatus.NOT_FOUND.value());
+//			return null;
+//		}
+		House house = houseService.getHouse(houseId);
+		if (house != null) {
+
+			modelMap.put("house", house);
+			
 			List<Image> images = imageService.getHouseImage(house.getId());
 			List<Image> d2images = new ArrayList<Image>();
 			List<Image> d3images = new ArrayList<Image>();
@@ -143,8 +208,10 @@ public class HouseController {
 					d3images.add(image);
 				}
 			}
-			model.addAttribute("d2images", d2images);
-			model.addAttribute("d3images", d3images);
+//			List<Image> d2imageList = fileService.getHouseImageFiles(houseId, Image.D2);
+//			List<Image> d3imageList = fileService.getHouseImageFiles(houseId, Image.D3);
+			modelMap.put("d2images", d2images);
+			modelMap.put("d3images", d3images);
 		}
 		return new ModelAndView("/tmpl/house/edit");
 	}

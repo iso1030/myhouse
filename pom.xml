@@ -32,7 +32,9 @@
 		<jetty.version>7.6.14.v20131031</jetty.version>
 		<h2.version>1.3.175</h2.version>
 		<zip4j.version>1.3.2</zip4j.version>
+		<unrar.version>1.7.0-SNAPSHOT</unrar.version>
 		<freemarker.version>2.3.19</freemarker.version>
+		<thumbnailator.version>0.4.7</thumbnailator.version>
 	
 		<!-- Plugin的属性定义 -->
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -74,6 +76,12 @@
 	        <artifactId>commons-codec</artifactId>
 	        <version>{commons-codec.version}</version>
 	    </dependency> -->
+	    <!-- thumbnailator -->
+	    <dependency>
+	        <groupId>net.coobird</groupId>
+	        <artifactId>thumbnailator</artifactId>
+	        <version>${thumbnailator.version}</version>
+	    </dependency>
 	    <!-- commons fileupload -->
 	    <dependency>
 	        <groupId>commons-fileupload</groupId>
@@ -96,6 +104,11 @@
 	        <groupId>net.lingala.zip4j</groupId>
 	        <artifactId>zip4j</artifactId>
 	        <version>${zip4j.version}</version>
+	    </dependency>
+	    <dependency>
+	        <groupId>de.innosystec</groupId>
+  			<artifactId>java-unrar</artifactId>
+  			<version>${unrar.version}</version>
 	    </dependency>
 		<!-- SPRINGSIDE -->
 		<dependency>

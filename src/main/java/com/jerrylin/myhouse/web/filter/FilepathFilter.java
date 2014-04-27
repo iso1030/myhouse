@@ -15,11 +15,13 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.springframework.context.ApplicationContext;
 import org.springframework.web.context.support.WebApplicationContextUtils;
+import org.springside.modules.utils.Encodes;
 
 import com.jerrylin.myhouse.service.AppConfigService;
 
 public class FilepathFilter implements Filter {
 	
+	private Pattern houseImagePattern = Pattern.compile("^/ht\\d+/(.*?)\\.(jpg|png|zip)$", Pattern.CASE_INSENSITIVE);
 	private Pattern bannerImagePattern = Pattern.compile("^/b/\\d+\\.jpg$", Pattern.CASE_INSENSITIVE);
 	private Pattern uploadImagePattern = Pattern.compile("^/\\d+(/d2|/d3)?/[\\da-z]+\\.(jpg|zip)$", Pattern.CASE_INSENSITIVE);
 	
@@ -38,7 +40,16 @@ public class FilepathFilter implements Filter {
 		String requestUri = httpRequest.getRequestURI();
 //		System.out.println(httpRequest.getRequestURI());
 //		System.out.println(httpRequest.getRequestURL());
-		Matcher matcher = uploadImagePattern.matcher(requestUri);
+		Matcher matcher = null;
+		matcher = houseImagePattern.matcher(requestUri);
+		if (matcher.matches()) {
+			if (requestUri.endsWith("zip"))
+				httpRequest.getRequestDispatcher(appConfigService.getPackagePrefix() + Encodes.urlDecode(requestUri)).forward(request, response);
+			else
+				httpRequest.getRequestDispatcher(appConfigService.getUploadPrefix() + Encodes.urlDecode(requestUri)).forward(request, response);
+			return;
+		}
+		matcher = uploadImagePattern.matcher(requestUri);
 		if (matcher.matches()) {
 			if (requestUri.endsWith("jpg"))
 				httpRequest.getRequestDispatcher(appConfigService.getUploadPrefix() + requestUri).forward(request, response);

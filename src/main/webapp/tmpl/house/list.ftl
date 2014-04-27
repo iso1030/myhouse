@@ -28,7 +28,7 @@
             <#list houseList as item>
             <tr>
             	<td>${item.id}</td>
-                <td><a href="${ctx}/house/edit?houseId=${item.id}">${item.address}</a></td>
+                <td><a href="${ctx}/vtour/${item.id}">${item.address}</a></td>
             	<td>${item.price}</td>
                 <td>${item.area}</td>
                 <td>${item.bedrooms}</td>

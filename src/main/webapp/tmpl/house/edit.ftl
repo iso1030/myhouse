@@ -1,4 +1,5 @@
 <#include "/tmpl/common/frame.ftl">
+<#escape x as x?html>
 <@pangu>
 	<style type="text/css">
       body {
@@ -28,8 +29,8 @@
     <div class="container-fluid">
     <ul class="nav nav-tabs" id="myTab">
 	  <li class="active"><a href="#home">基本信息</a></li>
-	  <li <#if !house?exists>class="disabled"</#if>><a href="#profile">2D图片</a></li>
-	  <li <#if !house?exists>class="disabled"</#if>><a href="#messages">3D图片</a></li>
+	  <li <#if !house?exists>class="disabled"</#if>><a href="#2dimages">2D图片</a></li>
+	  <li <#if !house?exists>class="disabled"</#if>><a href="#3dimages">3D图片</a></li>
 	</ul>
 	 
 	<div class="tab-content">
@@ -90,6 +91,10 @@
 		    </div>
 		  </div>
 		  <div class="control-group">
+		    <label class="control-label" for="email">下载地址</label>
+		    <div class="controls" id="packageUrl">${ctx}${house.packageUrl?default("还未对此房屋进行打包操作！")}</div>
+		  </div>
+		  <div class="control-group">
 		    <div class="controls">
 		      <button class="btn" id="postBtn">保存</button>
 		      <button class="btn" id="packBtn">打包</button>
@@ -97,70 +102,52 @@
 		  </div>
 		</form><!--/.fluid-container-->
 	  </div>
-	  <div class="tab-pane  container-fluid" id="profile">
+	  <div class="tab-pane  container-fluid" id="2dimages">
 		<ul class="thumbnails">
 		<#if d2images?exists>
 		<#list d2images as item>
 		  <li class="span3">
 		    <a href="${item.url}" class="thumbnail" target="_blank">
-		      <img data-src="${item.thumbnail}" src="${item.thumbnail}" alt="180x180" src="" style="width: 180px; height: 180px;">
+		      <img data-src="${item.thumbnail}" src="${item.thumbnail}" alt="180x120" src="" style="width: 180px; height: 120px;">
 		    </a>
-		    <p><a href="#" onclick="delete2d(${item.id});return false;">删除</a></p>
+		    <p><a href="#" onclick="delete2d(${item_index},${item.id},'${item.name?js_string}');return false;">删除</a></p>
 		  </li>
 		</#list>
 		</#if>
 		</ul>
-		<div class="control-group">
-	      <label class="control-label" for="coverImg">缩略图片</label>
-	      <div class="controls">
-	        <img class="preview" id="preview1"/>
-	        <input type="file" id="2dthumnail" name="thumnail" value="">
-      	    <span id="2dloading" style="display:none;">上传中...</span>
-	      </div>
-	    </div>
-	    <div class="control-group">
-	      <label class="control-label" for="coverImg">原图片</label>
-	      <div class="controls">
-	        <img class="preview" id="preview2"/>
-	        <input type="file" id="2dorigin" name="origin" value="">
-      	    <span id="2dloading" style="display:none;">上传中...</span>
-	      </div>
-	    </div>
+	  	<div class="control-group">
+	    	<label class="control-label" for="2dfileupload">打包文件上传</label>
+	    	<div class="controls">
+	      		<input type="file" id="2dfileupload" name="fileupload" value="">
+      	  		<span id="loading" style="display:none;">上传中...</span>
+	    	</div>
+	  	</div>
 	    <div class="control-group">
 	      <div class="controls">
 	        <button class="btn" id="postBtn2D">保存</button>
 	      </div>
 	    </div>
 	  </div>
-	  <div class="tab-pane" id="messages">
+	  <div class="tab-pane" id="3dimages">
 	  	<ul class="thumbnails">
 	  	<#if d3images?exists>
 		<#list d3images as item>
 		  <li class="span3">
 		    <a href="${item.url}" class="thumbnail" target="_blank">
-		      <img data-src="${item.thumbnail}" src="${item.thumbnail}"  alt="180x180" src="" style="width: 180px; height: 180px;">
+		      <img data-src="${item.thumbnail}" src="${item.thumbnail}"  alt="180x120" src="" style="width: 180px; height: 120px;">
 		    </a>
-		    <p><a href="#" onclick="delete3d(${item.id});return false;">删除</a></p>
+		    <p><a href="#" onclick="delete3d(${item_index},${item.id},'${item.name?js_string}');return false;">删除</a></p>
 		  </li>
 		</#list>
 		</#if>
 		</ul>
-		<div class="control-group">
-	      <label class="control-label" for="coverImg">缩略图片</label>
-	      <div class="controls">
-	        <img class="preview" id="preview3"/>
-	        <input type="file" id="3dthumnail" name="thumnail" value="">
-      	    <span id="3dloading" style="display:none;">上传中...</span>
-	      </div>
-	    </div>
-	    <div class="control-group">
-	      <label class="control-label" for="coverImg">原图片</label>
-	      <div class="controls">
-	        <img class="preview" id="preview4"/>
-	        <input type="file" id="3dorigin" name="origin" value="">
-      	    <span id="3dloading" style="display:none;">上传中...</span>
-	      </div>
-	    </div>
+	  	<div class="control-group">
+	    	<label class="control-label" for="3dfileupload">打包文件上传</label>
+	    	<div class="controls">
+	      		<input type="file" id="3dfileupload" name="fileupload" value="">
+      	  		<span id="loading" style="display:none;">上传中...</span>
+	    	</div>
+	  	</div>
 	    <div class="control-group">
 	      <div class="controls">
 	        <button class="btn" id="postBtn3D">保存</button>
@@ -202,24 +189,28 @@
 		})
 	</script>
     <script>
-    function delete2d(id) {
+    function delete2d(index, id, filename) {
+    	var domFrom = $("#houseForm").get(0);
+    	var houseId = parseInt(domFrom.id.value);
     	$.ajax({
     	    type: 'DELETE',
-    		url: '${ctx}/api/v1/image/' + id,
-    		success: function(response){
-    			location.href = location.href + "&tabindex=1";
+    		url: '${ctx}/house/deleteimage/?imageId=' + id + "&type=2&file=" + encodeURIComponent(filename),
+    		success: function(response) {
+    			location.href = "/house/edit?houseId="+houseId+"&tabindex=1";
     		},
     		error: function(request, status, error){
     			alert('图片删除失败！');
     		}
     	});
     }
-    function delete3d(id) {
+    function delete3d(index, id, filename) {
+    	var domFrom = $("#houseForm").get(0);
+    	var houseId = parseInt(domFrom.id.value);
     	$.ajax({
     	    type: 'DELETE',
-    		url: '${ctx}/api/v1/image/' + id,
+    		url: '${ctx}/house/deleteimage/?imageId=' + id + "&type=3&file=" + encodeURIComponent(filename),
     		success: function(response){
-    			location.href = location.href + "&tabindex=2";
+    			location.href = "/house/edit?houseId="+houseId+"&tabindex=2";
     		},
     		error: function(request, status, error){
     			alert('图片删除失败！');
@@ -241,6 +232,7 @@
     				alert(response.msg);
     				return;
     			}
+    			$("#packageUrl").html(response.url);
     			alert("打包成功");
     		},
     		error: function(request, status, error){
@@ -394,12 +386,43 @@
     		}
     	});
     }
+    
+    function uploadHouseImage(type) {
+    	var domFrom = $("#houseForm").get(0);
+    	var id = parseInt(domFrom.id.value);
+    	var fileElementId = type+'dfileupload';
+    	//starting setting some animation when the ajax starts and completes
+        $("#"+type+"dloading").ajaxStart(function(){
+            $(this).show();
+        }).ajaxComplete(function(){
+            $(this).hide();
+        });
+    	$.ajaxFileUpload({
+    	    type:'POST',
+    		url: "${ctx}/house/uploadimages/?id="+id+"&type="+type,
+    		secureuri: false,
+    		fileElementId: fileElementId,
+    		dataType: "json",
+    		success: function(data, status){
+    			alert("上传成功");
+    			$("#"+fileElementId).val("");
+    			location.href = "/house/edit?houseId="+id+"&tabindex="+(type-1);
+    		},
+    		error: function(data, status, error){
+    			$("#"+fileElementId).val("");
+    			alert("上传失败");
+    		}
+    	});
+    }
     $(document).ready(function(){
         $("#packBtn").click(function(){
         	pack();
         });
     	$("#postBtn").click(function(){
     		addOrUpdate();
+    	});
+    	$("#upload2dBtn").click(function(){
+    		upload2d();
     	});
     	$("#coverImgFile").change(function(){
     		var input = $(this).get(0),
@@ -415,63 +438,32 @@
     		ajaxUploadFile();
     	});
     	$("#postBtn2D").click(function(){
-    		addOrUpdate2D();
-    	});
-    	$("#2dthumnail").change(function(){
-    		var input = $(this).get(0),
+    		var input = $("#2dfileupload").get(0),
     		    value = input.value.trim();
     		if (!value) {
     			alert("请选择一个文件");
     			return;
     		}
-    		if (!/(jpg|png|jpeg|bmp)$/.test(value)) {
-    			alert("只能上传jpg,png,jpeg,bmp格式的图片");
+    		if (!/(zip|rar)$/.test(value)) {
+    			alert("只能上传zip|rar格式的图片");
     			return;
     		}
-    		ajaxUpload2DFile(0);
-    	});
-    	$("#2dorigin").change(function(){
-    		var input = $(this).get(0),
-    		    value = input.value.trim();
-    		if (!value) {
-    			alert("请选择一个文件");
-    			return;
-    		}
-    		if (!/(jpg|png|jpeg|bmp)$/.test(value)) {
-    			alert("只能上传jpg,png,jpeg,bmp格式的图片");
-    			return;
-    		}
-    		ajaxUpload2DFile(1);
+    		uploadHouseImage(2);
     	});
     	$("#postBtn3D").click(function(){
-    		addOrUpdate3D();
-    	});
-    	$("#3dthumnail").change(function(){
-    		var input = $(this).get(0),
+    		var input = $("#3dfileupload").get(0),
     		    value = input.value.trim();
     		if (!value) {
     			alert("请选择一个文件");
     			return;
     		}
-    		if (!/(jpg|png|jpeg|bmp)$/.test(value)) {
-    			alert("只能上传jpg,png,jpeg,bmp格式的图片");
+    		if (!/(zip|rar)$/.test(value)) {
+    			alert("只能上传zip|rar格式的图片");
     			return;
     		}
-    		ajaxUpload3DFile(0);
-    	});
-    	$("#3dorigin").change(function(){
-    		var input = $(this).get(0),
-    		    value = input.value.trim();
-    		if (!value) {
-    			alert("请选择一个文件");
-    			return;
-    		}
-    		if (!/(jpg|png|jpeg|bmp)$/.test(value)) {
-    			alert("只能上传jpg,png,jpeg,bmp格式的图片");
-    			return;
-    		}
-    		ajaxUpload3DFile(1);
+    		uploadHouseImage(3);
     	});
     });
     </script>
 </@pangu>
+</#escape>
