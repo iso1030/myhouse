@@ -64,6 +64,26 @@ public class HouseService {
 		houseDao.save(oldHouse);
 	}
 	
+	public void updateHouseBgMusic(long houseId, String bgMusic) {
+		if (houseId <= 0)
+			return;
+		House house = houseDao.findOne(houseId);
+		if (house == null)
+			return;
+		house.setBgMusic(bgMusic);
+		houseDao.save(house);
+	}
+	
+	public void updateHouseYoutube(long houseId, String youtube) {
+		if (houseId <= 0)
+			return;
+		House house = houseDao.findOne(houseId);
+		if (house == null)
+			return;
+		house.setYoutube(youtube);
+		houseDao.save(house);
+	}
+	
 	public void updateHousePackUrl(Long houseId, String packUrl) {
 		if (houseId == null || houseId <= 0)
 			return;
@@ -88,6 +108,8 @@ public class HouseService {
 
 	public void deleteHouse(Long id) {
 		houseDao.delete(id);
+		List<Image> images = imageDao.findByHid(id);
+		imageDao.delete(images);
 	}
 
 	public List<House> getAllHouse() {

@@ -5,7 +5,9 @@
  *******************************************************************************/
 package com.jerrylin.myhouse.web.house;
 
+import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -17,6 +19,11 @@ import javax.servlet.ServletRequest;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
+
+import net.lingala.zip4j.core.ZipFile;
+import net.lingala.zip4j.exception.ZipException;
+import net.lingala.zip4j.model.ZipParameters;
+import net.lingala.zip4j.util.Zip4jConstants;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.shiro.SecurityUtils;
@@ -30,6 +37,7 @@ import org.springframework.ui.ModelMap;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -39,6 +47,7 @@ import org.springframework.web.multipart.MultipartHttpServletRequest;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import com.jerrylin.myhouse.entity.Banner;
 import com.jerrylin.myhouse.entity.House;
 import com.jerrylin.myhouse.entity.Image;
 import com.jerrylin.myhouse.entity.User;
@@ -50,6 +59,7 @@ import com.jerrylin.myhouse.service.house.HouseService;
 import com.jerrylin.myhouse.service.house.ImageService;
 import com.jerrylin.myhouse.service.user.UserService;
 
+import org.springside.modules.utils.Identities;
 import org.springside.modules.web.MediaTypes;
 import org.springside.modules.web.Servlets;
 
@@ -89,7 +99,7 @@ public class HouseController {
 			modelMap.put("d3images", d3images);
 		}
 		response.setHeader("Content-Type", MediaTypes.APPLICATION_XML_UTF_8);
-		return new ModelAndView("/tmpl/house/krpano");
+		return new ModelAndView("/tour/krpano");
 	}
 	
 	@RequestMapping(value = "/xml/slides/{houseId}")
@@ -110,7 +120,27 @@ public class HouseController {
 			model.addAttribute("d2images", d2images);
 		}
 		response.setHeader("Content-Type", MediaTypes.APPLICATION_XML_UTF_8);
-		return new ModelAndView("/tmpl/house/slides");
+		return new ModelAndView("/tour/slides");
+	}
+	
+	@RequestMapping(value = "/addimages", method= RequestMethod.POST, produces = MediaTypes.JSON_UTF_8)
+	@ResponseBody
+	public List<Image> addImages(
+			@RequestParam(value = "houseId", defaultValue = "0") long houseId,
+			@RequestBody Image[] images, HttpServletRequest request, HttpServletResponse response) {
+		if (houseId <= 0) {
+			response.setStatus(HttpStatus.BAD_REQUEST.value());
+			return null;
+		}
+		if (images == null || images.length <= 0)
+			return null;
+		@SuppressWarnings("unchecked")
+		List<Image> imageList = CollectionUtils.arrayToList(images);
+		for (Image image : imageList) {
+			image.setHid(houseId);
+		}
+		imageService.addImages(imageList);
+		return imageList;
 	}
 	
 	@RequestMapping(value = "/uploadimages", method= RequestMethod.POST, produces = MediaTypes.JSON_UTF_8)
@@ -141,7 +171,7 @@ public class HouseController {
 			Image image = imageService.getImage(imageId);
 			if (image != null) {
 				imageService.deleteImage(image.getId());
-				fileService.deleteHouseImage(image.getHid(), image.getType(), image.getName());
+				fileService.deleteTourImage(image);
 			}
 		}
 		if (houseId <= 0 || (type != Image.D2 && type != Image.D3) || StringUtils.isBlank(filename))
@@ -172,7 +202,7 @@ public class HouseController {
 			Set<Long> idSet = new HashSet<Long>();
 			for (House house : houses.getContent()) {
 				if (house.getUid() > 0)
-					idSet.add(house.getId());
+					idSet.add(house.getUid());
 			}
 			if (idSet.size() > 0) {
 				List<UserProfile> users = userService.getUserProfileListByIds(idSet);
@@ -218,6 +248,7 @@ public class HouseController {
 			response.setStatus(HttpStatus.NOT_FOUND.value());
 			return null;
 		}
+		modelMap.put("host", request.getRemoteHost());
 		modelMap.put("house", house);
 		modelMap.put("submodule", subModule);
 		
@@ -273,6 +304,46 @@ public class HouseController {
 		
 		houseService.updateHouse(house);
 		return house;
+	}
+	
+	@RequestMapping(value = "/delete", method = RequestMethod.DELETE, produces = MediaTypes.JSON_UTF_8)
+	@ResponseBody
+	public void delete(
+			@RequestParam(value = "id", defaultValue = "0") long id,
+			HttpServletRequest request, HttpServletResponse response) {
+		if (id > 0) {
+			House house = houseService.getHouse(id);
+			if (house != null) {
+				houseService.deleteHouse(house.getId());
+				fileService.deleteHouse(house.getId());
+			}
+		}
+	}
+	
+	@RequestMapping(value = "/package", method = RequestMethod.POST, produces = MediaTypes.JSON_UTF_8)
+	@ResponseBody
+	public Map<String, String> pack(HttpServletRequest request, HttpServletResponse response,
+			@RequestParam(value = "id", defaultValue = "0") long houseId) {
+		if (houseId <= 0) {
+			response.setStatus(HttpStatus.BAD_REQUEST.value());
+			return null;
+		}
+		
+		House house = houseService.getHouse(houseId);
+		if (house == null) {
+			response.setStatus(HttpStatus.NOT_FOUND.value());
+			return null;
+		}
+		List<Image> images = imageService.getHouseImage(houseId);
+		String result = fileService.packageHouseImage(houseId, images);
+		if (result == null) {
+			response.setStatus(HttpStatus.EXPECTATION_FAILED.value());
+			return null;
+		}
+		houseService.updateHousePackUrl(houseId, result);
+		Map<String, String> map = new HashMap<String, String>();
+		map.put("url", result);
+		return map;
 	}
 
 	/**

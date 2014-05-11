@@ -1,6 +1,8 @@
 package com.jerrylin.myhouse.service.fs;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -12,6 +14,8 @@ import net.coobird.thumbnailator.geometry.Positions;
 import net.lingala.zip4j.core.ZipFile;
 import net.lingala.zip4j.exception.ZipException;
 import net.lingala.zip4j.model.FileHeader;
+import net.lingala.zip4j.model.ZipParameters;
+import net.lingala.zip4j.util.Zip4jConstants;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -22,6 +26,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 import org.springside.modules.utils.Identities;
 
+import com.jerrylin.myhouse.entity.Banner;
 import com.jerrylin.myhouse.entity.Image;
 import com.jerrylin.myhouse.service.AppConfigService;
 import com.jerrylin.myhouse.service.ServiceException;
@@ -140,7 +145,7 @@ public class FileService {
 		return null;
 	}
 	
-	public String getHouseDirName(long houseId) {
+	private String getHouseDirName(long houseId) {
 		return "ht" + houseId;
 	}
 	
@@ -149,17 +154,17 @@ public class FileService {
 		return uploadDir + File.separator + getHouseDirName(houseId);
 	}
 	
-	public String getHouseImageDirName(long houseId, int type, boolean isThumbnail) {
+	private String getHouseImageDirName(long houseId, int type, boolean isThumbnail) {
 		return getHouseDirName(houseId) + File.separator + (isThumbnail ? "." : "") 
 				+ (type == Image.D2 ? "d2" : "d3");
 	}
 	
-	public String getHouseImageDir(long houseId, int type, boolean isThumbnail) {
+	private String getHouseImageDir(long houseId, int type, boolean isThumbnail) {
 		String uploadDir = appConfigService.getUploadDir();
 		return uploadDir + File.separator + getHouseImageDirName(houseId, type, isThumbnail);
 	}
 	
-	public boolean createDir(String path) {
+	private boolean createDir(String path) {
 		return true;
 	}
 	/**
@@ -213,31 +218,32 @@ public class FileService {
 	public List<Image> addHouseImage(long houseId, int type, MultipartFile file) {
 		if (houseId <= 0 || file == null)
 			return  null;
+		String baseDir = appConfigService.getBaseDir();
+		
 		// 创建House原图片文件夹目录
-		String imageDirname = this.getHouseImageDirName(houseId, type, false);
-		String imageDirpath = this.getHouseImageDir(houseId, type, false);
-		File imageDirFile = new File(imageDirpath);
-		if (!imageDirFile.exists() || !imageDirFile.isDirectory()) {
-			imageDirFile.mkdirs();
+		String baseImageDir = UrlConverter.getTourImagePath(houseId, type, false);
+		String localImageDir = baseDir + baseImageDir;
+		File localImageFile = new File(localImageDir);
+		if (!localImageFile.exists() || !localImageFile.isDirectory()) {
+			localImageFile.mkdirs();
 		}
 		// 创建House缩略图文件夹目录
-		String thumbDirname = this.getHouseImageDirName(houseId, type, true);
-		String thumbDirpath = this.getHouseImageDir(houseId, type, true);
-		File thumbDirFile = new File(thumbDirpath);
-		if (!thumbDirFile.exists() || !thumbDirFile.isDirectory()) {
-			thumbDirFile.mkdirs();
+		String baseThumbDir = UrlConverter.getTourImagePath(houseId, type, true);
+		String localThumbDir = baseDir + baseThumbDir;
+		File localThumbFile = new File(localThumbDir);
+		if (!localThumbFile.exists() || !localThumbFile.isDirectory()) {
+			localThumbFile.mkdirs();
 		}
-		
+
 		String extension = getFileExtension(file.getOriginalFilename());
 		if (extension.equals("zip") || extension.equals("rar")) {
 			try {
 				// 先保存到临时目录
-				String tmpDir = appConfigService.getTmpDir();
-				File tmpFile = new File(tmpDir + File.separator + file.getOriginalFilename());
-				FileUtils.copyInputStreamToFile(file.getInputStream(), tmpFile);
+				String tempPath = baseDir + UrlConverter.getTempPath();
+				File tempFile = new File(tempPath + file.getOriginalFilename());
+				FileUtils.copyInputStreamToFile(file.getInputStream(), tempFile);
 				
-				ZipFile zipFile = new ZipFile(tmpFile);
-				zipFile.setFileNameCharset("GBK");
+				ZipFile zipFile = new ZipFile(tempFile);
 				if (!zipFile.isValidZipFile())
 					throw new ZipException("压缩文件已损坏");
 				
@@ -247,34 +253,24 @@ public class FileService {
 				for (FileHeader each : headerList) {
 					if (each.isDirectory() || each.getFileName().indexOf(File.separator)>=0)
 						continue;
-					zipFile.extractFile(each, imageDirpath);
+					// 是否重新生成新的名字？？
+					String originFilename = each.getFileName();
+					String targetFilename = originFilename;
 					
-					String targetFilename = each.getFileName();
-					String targetImagename = imageDirpath + File.separator + targetFilename;
-					String targetThumbname = thumbDirpath + File.separator + targetFilename;
-//					System.out.println(targetFilename);
-//					System.out.println(targetImagename);
-//					System.out.println(targetThumbname);
-//					System.out.println(new File(thumbDirpath).exists());
-//					System.out.println("===============");
-					if (type == Image.D3) {
-						Thumbnails.of(targetImagename)
-						          .sourceRegion(Positions.CENTER, 360, 240)
-						          .size(180, 120)
-						          .keepAspectRatio(false)
-						          .toFile(targetThumbname);
-					} else {
-						Thumbnails.of(targetImagename)
-				          .size(180, 120)
-				          .toFile(targetThumbname);
-					}
+					zipFile.extractFile(each, localImageDir);
+					
+					Thumbnails.of(localImageDir + targetFilename)
+					          .sourceRegion(Positions.CENTER, 600, 400)
+					          .size(300, 200)
+					          .keepAspectRatio(false)
+					          .toFile(localThumbDir + targetFilename);
 					Image image = new Image();
 					image.setId(0L);
 					image.setHid(houseId);
 					image.setType(type);
-					image.setName(targetFilename);
-					image.setUrl(File.separator + imageDirname + File.separator + targetFilename);
-					image.setThumbnail(File.separator + thumbDirname + File.separator + targetFilename);
+					image.setName(originFilename);
+					image.setUrl(baseImageDir + targetFilename);
+					image.setThumbnail(baseThumbDir + targetFilename);
 					extractImages.add(image);
 				}
 				return extractImages;
@@ -308,6 +304,87 @@ public class FileService {
 		return null;
 	}
 	
+	public void deleteHouse(long houseId) {
+		String baseDir = appConfigService.getBaseDir();
+		String houseDir = UrlConverter.getTourImageBase(houseId);
+		File houseDirFile = new File(baseDir + houseDir);
+		if (houseDirFile.exists() && houseDirFile.isDirectory())
+			houseDirFile.delete();
+	}
+	
+	public void deleteTourImage(Image image) {
+		if (image == null)
+			return;
+		String baseDir = appConfigService.getBaseDir();
+		if (StringUtils.isNotBlank(image.getUrl())) {
+			File localImageFile = new File(baseDir + image.getUrl());
+			if (localImageFile.exists())
+				localImageFile.delete();
+		}
+		if (StringUtils.isNotBlank(image.getThumbnail())) {
+			File localThumbFile = new File(baseDir + image.getThumbnail());
+			if (localThumbFile.exists())
+				localThumbFile.delete();
+		}
+	}
+	public void deleteBannerImage(Banner banner) {
+		if (banner == null)
+			return;
+		String baseDir = appConfigService.getBaseDir();
+		if (StringUtils.isNotBlank(banner.getUrl())) {
+			File localImageFile = new File(baseDir + banner.getUrl());
+			if (localImageFile.exists())
+				localImageFile.delete();
+		}
+		if (StringUtils.isNotBlank(banner.getThumbnail())) {
+			File localThumbFile = new File(baseDir + banner.getThumbnail());
+			if (localThumbFile.exists())
+				localThumbFile.delete();
+		}
+	}
+	
+	public String packageHouseImage(long houseId, List<Image> images) {
+		if (houseId <= 0 || images == null)
+			return null;
+		
+		String baseDir = appConfigService.getBaseDir();
+		String targetDir = UrlConverter.getTourPackagePath(houseId);
+		String filename = Identities.uuid2() + ".zip";
+		
+		try {
+			File targetDirFile = new File(baseDir + targetDir);
+			if (!targetDirFile.exists() || !targetDirFile.isDirectory()) {
+				targetDirFile.mkdirs();
+			}
+			ZipFile zipFile = new ZipFile(baseDir + targetDir + filename);
+			for (Image image : images) {
+				File imageFile = new File(baseDir + image.getUrl());
+				File thumbFile = new File(baseDir + image.getThumbnail());
+				if (!imageFile.exists() || !thumbFile.exists())
+					continue;
+				
+				ZipParameters parameters = new ZipParameters();
+				parameters.setCompressionMethod(Zip4jConstants.COMP_DEFLATE);			// 压缩方式
+				parameters.setCompressionLevel(Zip4jConstants.DEFLATE_LEVEL_NORMAL);	// 压缩级别
+				parameters.setSourceExternalStream(true);
+				
+				parameters.setFileNameInZip("/"+houseId+"/d"+image.getType()+"/"+image.getName());
+				zipFile.addStream(new FileInputStream(imageFile), parameters);
+				
+				parameters.setFileNameInZip("/"+houseId+"/.d"+image.getType()+"/"+image.getName());
+				zipFile.addStream(new FileInputStream(thumbFile), parameters);
+			}
+		
+			return targetDir + filename;
+		} catch (FileNotFoundException e) {
+			logger.warn("打包文件未找到相应图片", e);
+		} catch (ZipException e) {
+			logger.warn("打包文件失败", e);
+		}
+		return null;
+	}
+
+	
 	public void deleteHouseImage(long houseId, int type, String filename) {
 		String imagePath = this.getHouseImageDir(houseId, type, true);
 		String imageName = imagePath + File.separator + filename;
@@ -340,21 +417,6 @@ public class FileService {
 //		return realname;
 //	}
 	
-	/**
-	 * 删除文件系统的banner图片
-	 * 
-	 * @param url
-	 */
-	public void deleteBannerImage(String url) {
-		if (StringUtils.isBlank(url))
-			return;
-		
-		String uploadDir = appConfigService.getBannerDir();
-		File file = new File(uploadDir + url);
-		if (file.exists())
-			file.delete();
-	}
-
 	/**
 	 * 删除文件系统里的上传图片，避免被同时打包
 	 * 

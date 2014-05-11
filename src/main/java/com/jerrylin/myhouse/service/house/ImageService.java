@@ -46,7 +46,7 @@ public class ImageService {
 	}
 	
 	public List<Image> getHouseImage(Long houseId) {
-		Page<Image> images = imageDao.findByHid(houseId, new PageRequest(0, 100, new Sort(Direction.DESC, "id")));
+		Page<Image> images = imageDao.findByHid(houseId, new PageRequest(0, 100, new Sort(Direction.ASC, "sort")));
 		return images.getContent();
 	}
 	

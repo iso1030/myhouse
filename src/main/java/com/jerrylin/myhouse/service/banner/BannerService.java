@@ -6,12 +6,13 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Sort.Direction;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.jerrylin.myhouse.entity.Banner;
 import com.jerrylin.myhouse.repository.BannerDao;
-import com.jerrylin.myhouse.service.fs.FileService;
 
 @Component
 @Transactional
@@ -20,8 +21,9 @@ public class BannerService {
 	@Autowired
 	private BannerDao bannerDao;
 	
-	@Autowired
-	private FileService fileService;
+	public Banner getBanner(long id) {
+		return bannerDao.findOne(id);
+	}
 	
 	public Banner addBanner(Banner banner) {
 		if (banner == null)
@@ -31,8 +33,19 @@ public class BannerService {
 		return banner;
 	}
 	
+	public List<Banner> addBanners(List<Banner> banners) {
+		if (banners == null)
+			return banners;
+		for (Banner banner : banners) {
+			if (banner.getCreateTime() <= 0)
+				banner.setCreateTime(new Date().getTime());
+		}
+		bannerDao.save(banners);
+		return banners;
+	}
+	
 	public List<Banner> getBanners(long time) {
-		return bannerDao.findByCreateTimeGreaterThan(time);
+		return bannerDao.findByCreateTimeGreaterThan(time,new Sort(Direction.ASC, "sort"));
 	}
 	
 	public Page<Banner> getBannerPage(int pageNumber, int pageSize) {
@@ -46,7 +59,5 @@ public class BannerService {
 		if (banner == null)
 			return;
 		bannerDao.delete(banner);
-		// delete image file
-		fileService.deleteBannerImage(banner.getUrl());
 	}
 }

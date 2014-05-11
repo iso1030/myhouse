@@ -25,7 +25,7 @@ public class HouseData {
 		house.setBedrooms(randomBedrooms());
 		house.setBgMusic("/" + randomBgMusic());
 		house.setId(RandomData.randomId());
-		house.setOpenTime(new Date());
+		house.setOpenTime(new Date().getTime());
 		house.setPrice(RandomData.randomId());
 		house.setUid(1L);
 		return house;

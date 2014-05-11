@@ -7,6 +7,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort.Direction;
 import org.springframework.test.context.ContextConfiguration;
+import org.springside.modules.test.spring.Profiles;
 import org.springside.modules.test.spring.SpringTransactionalTestCase;
 
 import com.jerrylin.myhouse.entity.House;
@@ -19,6 +20,8 @@ public class HouseDaoTest extends SpringTransactionalTestCase {
 	
 	@Test
 	public void findHousesByUserId() throws Exception {
+		// 设定Spring的profile
+		Profiles.setProfileAsSystemProperty(Profiles.PRODUCTION);
 		Page<House> houses = houseDao.findByUid(2L, new PageRequest(0, 100, Direction.ASC, "id"));
 		Assertions.assertThat(houses.getContent()).hasSize(2);
 	}

@@ -2,7 +2,11 @@ package com.jerrylin.myhouse.rest;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -22,10 +26,12 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springside.modules.web.MediaTypes;
 
 import com.jerrylin.myhouse.entity.House;
+import com.jerrylin.myhouse.entity.RandomUser;
 import com.jerrylin.myhouse.entity.User;
 import com.jerrylin.myhouse.entity.UserAccount;
 import com.jerrylin.myhouse.entity.UserProfile;
 import com.jerrylin.myhouse.service.house.HouseService;
+import com.jerrylin.myhouse.service.user.RandomUserService;
 import com.jerrylin.myhouse.service.user.UserService;
 
 @RestController
@@ -34,6 +40,9 @@ public class UserRestController {
 
 	@Autowired
 	private UserService userService;
+	
+	@Autowired
+	private RandomUserService randomUserService;
 	
 	@Autowired
 	private HouseService houseService;
@@ -99,6 +108,14 @@ public class UserRestController {
 		}
 		return null;
 	}
+	@RequestMapping(value = "/random/filter", method = RequestMethod.GET, produces = MediaTypes.JSON_UTF_8)
+	public Page<UserProfile> randomCount() {
+		List<Long> filterIds = new ArrayList<Long>();
+		filterIds.add(1L);
+		filterIds.add(2L);
+		userService.test();
+		return userService.getUserProfilePage(1, 5, filterIds);
+	}
 	/**
 	 * 随便看看
 	 * 
@@ -107,35 +124,85 @@ public class UserRestController {
 	 * @return
 	 */
 	@RequestMapping(value = "/random", method = RequestMethod.GET, produces = MediaTypes.JSON_UTF_8)
-	public List<User> random(HttpServletRequest request, HttpServletResponse response)  {
+	public List<User> random(
+			@RequestParam(value = "page", defaultValue = "1") int page,
+			HttpServletRequest request, HttpServletResponse response)  {
+		// 每页大小
+		int psize = 5;
 		List<User> users = new ArrayList<User>();
 		
-		long count = userService.getCount();
-		if (count == 0)
+		List<RandomUser> randomUsers = randomUserService.getRandomUserByPageIndex(page);
+		List<Long> randomUserIds = new ArrayList<Long>();
+		if (randomUsers != null && randomUsers.size() > 0) {
+			for (RandomUser each : randomUsers) {
+				// 只有有效的推荐才会去查询
+				if (each.getUid() > 0 && each.getPagePos() <= psize && each.getPagePos() >= 1)
+					randomUserIds.add(each.getUid());
+			}
+		}
+		// 将UserProfile补充完整
+		List<RandomUser> randomUserList = new ArrayList<RandomUser>();
+		if (randomUserIds.size() > 0) {
+			List<UserProfile> userProfiles = userService.getUserProfileListByIds(randomUserIds);
+			Map<Long, UserProfile> userMap = new HashMap<Long, UserProfile>();
+			for (UserProfile each : userProfiles) {
+				userMap.put(each.getId(), each);
+			}
+			if (randomUsers != null && randomUsers.size() > 0) {
+				for (RandomUser each : randomUsers) {
+					if (each.getUid() > 0 && each.getPagePos() <= psize && 
+						each.getPagePos() >=1 && userMap.get(each.getUid()) != null) {
+						each.setUserProfile(userMap.get(each.getUid()));
+						randomUserList.add(each);
+					}
+				}
+			}
+		}
+		// 如果当前页的推荐用户已经满一页，直接获取返回
+		if (randomUserList.size() >= psize) {
+			for (RandomUser each : randomUserList) {
+				users.add(new User(each.getUserProfile()));
+			}
 			return users;
-		
-		if (count <= 5) {
-			Page<UserProfile> profilePage = userService.getUserProfilePage(1, 5);
-			List<UserProfile> profileList = profilePage.getContent();
-			for (UserProfile each : profileList) {
-				users.add(new User(each));
+		}
+		long count = randomUserIds.size() == 0 ? userService.getCount() : userService.getCountByFilter(randomUserIds);
+		// 当前页的推荐过滤后已经没有多余的了，直接获取返回
+		if (count == 0) {
+			for (RandomUser each : randomUserList) {
+				users.add(new User(each.getUserProfile()));
 			}
 			return users;
 		}
 		
-		List<Long> list = new ArrayList<Long>();
-		for (int i = 1; i <= count; ++i)
-			list.add(new Long(i));
-		Collections.shuffle(list);
+//		int pageCount = new Double(Math.ceil(count / psize)).intValue();
+//		page = Math.max(Math.min(page, pageCount), 1);
 		
-		list = list.subList(0, 5);
-		for (int i = 0, l = list.size(); i < l; ++i) {
-			Page<UserProfile> profilePage = userService.getUserProfilePage(list.get(i).intValue(), 1);
+		int restCount = psize - randomUserList.size();
+		if (count <= restCount) {
+			Page<UserProfile> profilePage = userService.getUserProfilePage(1, restCount, randomUserIds);
 			List<UserProfile> profileList = profilePage.getContent();
 			for (UserProfile each : profileList) {
 				users.add(new User(each));
 			}
+		} else {
+			List<Long> list = new ArrayList<Long>();
+			for (int i = 1; i <= count; ++i)
+				list.add(new Long(i));
+			Collections.shuffle(list);
+			
+			list = list.subList(0, Math.min(list.size(), restCount));
+			for (int i = 0, l = list.size(); i < l; ++i) {
+				Page<UserProfile> profilePage = userService.getUserProfilePage(list.get(i).intValue(), 1, randomUserIds);
+				List<UserProfile> profileList = profilePage.getContent();
+				for (UserProfile each : profileList) {
+					users.add(new User(each));
+				}
+			}
 		}
+		for (RandomUser each : randomUserList) {
+			users.add(each.getPagePos() - 1, new User(each.getUserProfile()));
+		}
+		
 		return users;
 	}
 	/**

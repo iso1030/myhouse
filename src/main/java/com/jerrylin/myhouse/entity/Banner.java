@@ -10,7 +10,9 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 public class Banner extends IdEntity {
 
 	private String url;
+	private String thumbnail;
 	private long uid;
+	private int sort;
 	private long createTime;
 	
 	public String getUrl() {
@@ -18,6 +20,18 @@ public class Banner extends IdEntity {
 	}
 	public void setUrl(String url) {
 		this.url = url;
+	}
+	public String getThumbnail() {
+		return thumbnail;
+	}
+	public void setThumbnail(String thumbnail) {
+		this.thumbnail = thumbnail;
+	}
+	public int getSort() {
+		return sort;
+	}
+	public void setSort(int sort) {
+		this.sort = sort;
 	}
 	public long getUid() {
 		return uid;

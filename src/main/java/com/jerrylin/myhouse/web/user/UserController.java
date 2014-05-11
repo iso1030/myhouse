@@ -27,6 +27,7 @@ import org.springframework.web.servlet.ModelAndView;
 import org.springside.modules.utils.Identities;
 import org.springside.modules.web.MediaTypes;
 
+import com.jerrylin.myhouse.entity.House;
 import com.jerrylin.myhouse.entity.User;
 import com.jerrylin.myhouse.entity.UserAccount;
 import com.jerrylin.myhouse.entity.UserProfile;
@@ -75,11 +76,14 @@ public class UserController {
 		return new ModelAndView("/user/edit");
 	}
 	
-	@RequestMapping(value = "/{id}", method = RequestMethod.DELETE)
+	@RequestMapping(value = "/delete", method = RequestMethod.DELETE, produces = MediaTypes.JSON_UTF_8)
 	@ResponseBody
-	@ResponseStatus(HttpStatus.NO_CONTENT)
-	public void delete(@PathVariable("id") long userId) {
-		userService.deleteUser(userId);
+	public void delete(
+			@RequestParam(value = "id", defaultValue = "0") long id,
+			HttpServletRequest request, HttpServletResponse response) {
+		if (id > 0) {
+			userService.deleteUser(id);
+		}
 	}
 	
 	@RequestMapping(value = "/addorupdate", method = RequestMethod.POST, produces = MediaTypes.JSON_UTF_8)

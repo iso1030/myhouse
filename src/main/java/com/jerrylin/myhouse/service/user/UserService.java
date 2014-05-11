@@ -5,6 +5,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Predicate;
+import javax.persistence.criteria.Root;
+
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,6 +28,7 @@ import org.springside.modules.security.utils.Digests;
 import org.springside.modules.utils.Clock;
 import org.springside.modules.utils.Encodes;
 
+import com.google.common.collect.Lists;
 import com.jerrylin.myhouse.entity.UserAccount;
 import com.jerrylin.myhouse.entity.UserProfile;
 import com.jerrylin.myhouse.repository.UserAccountDao;
@@ -45,6 +53,10 @@ public class UserService {
 	private UserAccountDao userAccountDao;
 	
 	private Clock clock = Clock.DEFAULT;
+	
+	@PersistenceContext
+	private EntityManager em;
+
 
 //	/**
 //	 * 分页查询用户信息
@@ -82,9 +94,34 @@ public class UserService {
 //		
 //		return userPage;
 //	}
+	
+	public void test() {
+		List list = em.createNativeQuery("select id from mh_user_profile").getResultList();
+		for (Object o : list) {
+			System.out.println(o);
+		}
+	}
 
 	public long getCount() {
 		return userProfileDao.count();
+	}
+	
+	public long getCountByFilter(final List<Long> filterIds) {
+//		List<SearchFilter> filters = new ArrayList<SearchFilter>();
+//		filters.add(new SearchFilter("telephone", Operator., phone));
+		Specification<UserProfile> spec = new Specification<UserProfile>() {
+			@Override
+			public Predicate toPredicate(Root<UserProfile> root, CriteriaQuery<?> query, CriteriaBuilder builder) {
+				List<Predicate> predicates = Lists.newArrayList();
+				predicates.add(builder.not(root.get("id").in(filterIds)));
+				// 将所有条件用 and 联合起来
+				if (!predicates.isEmpty()) {
+					return builder.and(predicates.toArray(new Predicate[predicates.size()]));
+				}
+				return builder.conjunction();
+			}
+		};
+		return userProfileDao.count(spec);
 	}
 	/**
 	 * 查询单个用户基本信息
@@ -106,6 +143,22 @@ public class UserService {
 	 */
 	public Page<UserProfile> getUserProfilePage(int pageNumber, int pageSize) {
 		Page<UserProfile> page = userProfileDao.findAll(new PageRequest(pageNumber - 1, pageSize));
+		return page;
+	}
+	public Page<UserProfile> getUserProfilePage(int pageNumber, int pageSize, final List<Long> filterIds) {
+		Specification<UserProfile> spec = new Specification<UserProfile>() {
+			@Override
+			public Predicate toPredicate(Root<UserProfile> root, CriteriaQuery<?> query, CriteriaBuilder builder) {
+				List<Predicate> predicates = Lists.newArrayList();
+				predicates.add(builder.not(root.get("id").in(filterIds)));
+				// 将所有条件用 and 联合起来
+				if (!predicates.isEmpty()) {
+					return builder.and(predicates.toArray(new Predicate[predicates.size()]));
+				}
+				return builder.conjunction();
+			}
+		};
+		Page<UserProfile> page = userProfileDao.findAll(spec, new PageRequest(pageNumber - 1, pageSize));
 		return page;
 	}
 	/**
@@ -158,6 +211,9 @@ public class UserService {
 	 */
 	public List<UserAccount> getUserAccountList() {
 		return (List<UserAccount>) userAccountDao.findAll();
+	}
+	public List<UserProfile> getUserProfileListByIds(List<Long> ids) {
+		return (List<UserProfile>) userProfileDao.findAll(ids); 
 	}
 	public List<UserProfile> getUserProfileListByIds(Set<Long> ids) {
 		return (List<UserProfile>) userProfileDao.findAll(ids);
