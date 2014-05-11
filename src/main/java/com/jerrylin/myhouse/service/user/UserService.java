@@ -1,31 +1,30 @@
 package com.jerrylin.myhouse.service.user;
 
-import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import org.springside.modules.persistence.DynamicSpecifications;
+import org.springside.modules.persistence.SearchFilter;
+import org.springside.modules.persistence.SearchFilter.Operator;
 import org.springside.modules.security.utils.Digests;
 import org.springside.modules.utils.Clock;
 import org.springside.modules.utils.Encodes;
 
-import com.jerrylin.myhouse.entity.User;
 import com.jerrylin.myhouse.entity.UserAccount;
 import com.jerrylin.myhouse.entity.UserProfile;
 import com.jerrylin.myhouse.repository.UserAccountDao;
 import com.jerrylin.myhouse.repository.UserProfileDao;
-import com.jerrylin.myhouse.service.AppConfigService;
 import com.jerrylin.myhouse.service.ServiceException;
 
 @Component
@@ -38,58 +37,52 @@ public class UserService {
 	public static final String HASH_ALGORITHM = "SHA-1";
 	public static final int HASH_INTERATIONS = 1024;
 	private static final int SALT_SIZE = 8;
-	
-	@Autowired
-	private AppConfigService appConfigService;
 
 	@Autowired
 	private UserProfileDao userProfileDao;
 
 	@Autowired
 	private UserAccountDao userAccountDao;
-
+	
 	private Clock clock = Clock.DEFAULT;
-	
-	/**
-	 * 创建用户目录
-	 * 
-	 * @param userId
-	 * @return
-	 */
-//	public boolean createUserDir(Long userId) {
-//		boolean result = false;
-//		String uploadDir = this.appConfigService.getUploadDir();
-//		String targetDir = uploadDir + File.separator + String.valueOf(userId);
-//		File file = new File(targetDir);
-//		if (!file.exists() || !file.isDirectory()) {
-//			result = file.mkdir();
-//		} else {
-//			// exists
-//			result = true;
+
+//	/**
+//	 * 分页查询用户信息
+//	 * 
+//	 * @param pageNumber
+//	 * @param pageSize
+//	 * @return
+//	 */
+//	public Page<User> getUserPage(int pageNumber, int pageSize) {
+//		Page<UserProfile> page = userProfileDao.findAll(new PageRequest(pageNumber - 1, pageSize));
+//		
+//		List<UserProfile> userProfiles = page.getContent();
+//		List<Long> ids = new ArrayList<Long>();
+//		for (UserProfile userProfile : userProfiles) {
+//			ids.add(userProfile.getId());
 //		}
-//		return result;
-//	}
-	/**
-	 * 删除用户目录
-	 * 
-	 * @param userId
-	 * @return
-	 */
-//	public boolean deleteUserDir(Long userId) {
-//		boolean result = true;
-//		String uploadDir = this.appConfigService.getUploadDir();
-//		String targetDir = uploadDir + File.separator + String.valueOf(userId);
-//		File file = new File(targetDir);
-//		if (file.exists() && file.isDirectory()) {
-//			// move to temp dir
-//			String removeDir = this.appConfigService.getDeleteDir();
-//			result = file.renameTo(new File(removeDir + File.separator + String.valueOf(userId)));
-//		} else {
-//			result = true;
+//		// 不知道这里有没有针对批量查询做优化的，如果没有的话，其实可以直接在上面循环直接做掉
+//		Iterable<UserAccount> userAccounts = userAccountDao.findAll(ids);
+//		Map<Long, UserAccount> temp = new HashMap<Long, UserAccount>();
+//		for (UserAccount userAccount : userAccounts) {
+//			temp.put(userAccount.getId(), userAccount);
 //		}
-//		return result;
+//
+//		List<User> userList = new ArrayList<User>();
+//		for (UserProfile userProfile : userProfiles) {
+//			User user = new User(userProfile);
+//			UserAccount account = temp.get(userProfile.getId());
+//			if (account != null) {
+////				user.setCreateTime(account.getCreateTime());
+//				user.setType(account.getType());
+//			}
+//			userList.add(user);
+//		}
+//		Page<User> userPage = new PageImpl<User>(userList, new PageRequest(pageNumber - 1, pageSize), page.getTotalElements());
+//		
+//		return userPage;
 //	}
-	
+
 	public long getCount() {
 		return userProfileDao.count();
 	}
@@ -99,88 +92,55 @@ public class UserService {
 	 * @param userId
 	 * @return
 	 */
-	public User getUser(Long userId) {
+	public UserProfile getUserProfile(Long userId) {
 		UserProfile userProfile = userProfileDao.findOne(userId);
-		UserAccount userAccount = userAccountDao.findOne(userId);
 
-		if (userProfile != null) {
-			User user = new User(userProfile);
-			user.setCreateTime(userAccount.getCreateTime());
-			user.setType(userAccount.getType());
-			return user;
-		}
-		return null;
+		return userProfile;
 	}
 	/**
-	 * 分页查询用户信息
+	 * 翻页获取用户Profile列表
 	 * 
 	 * @param pageNumber
 	 * @param pageSize
 	 * @return
 	 */
-	public Page<User> getUserPage(int pageNumber, int pageSize) {
+	public Page<UserProfile> getUserProfilePage(int pageNumber, int pageSize) {
 		Page<UserProfile> page = userProfileDao.findAll(new PageRequest(pageNumber - 1, pageSize));
-		
-		List<UserProfile> userProfiles = page.getContent();
-		List<Long> ids = new ArrayList<Long>();
-		for (UserProfile userProfile : userProfiles) {
-			ids.add(userProfile.getId());
-		}
-		// 不知道这里有没有针对批量查询做优化的，如果没有的话，其实可以直接在上面循环直接做掉
-		Iterable<UserAccount> userAccounts = userAccountDao.findAll(ids);
-		Map<Long, UserAccount> temp = new HashMap<Long, UserAccount>();
-		for (UserAccount userAccount : userAccounts) {
-			temp.put(userAccount.getId(), userAccount);
-		}
-
-		List<User> userList = new ArrayList<User>();
-		for (UserProfile userProfile : userProfiles) {
-			User user = new User(userProfile);
-			UserAccount account = temp.get(userProfile.getId());
-			if (account != null) {
-				user.setCreateTime(account.getCreateTime());
-				user.setType(account.getType());
-			}
-			userList.add(user);
-		}
-		Page<User> userPage = new PageImpl<User>(userList, new PageRequest(pageNumber - 1, pageSize), page.getTotalElements());
-		
-		return userPage;
+		return page;
 	}
 	/**
-	 * 获取用户列表
+	 * 翻页获取用户Profile列表，根据电话号码查询
 	 * 
 	 * @param pageNumber
 	 * @param pageSize
+	 * @param phone
 	 * @return
 	 */
-	public List<User> getUserList(int pageNumber, int pageSize) {
-		Page<UserProfile> page = userProfileDao.findAll(new PageRequest(
-				pageNumber - 1, pageSize));
-
-		List<UserProfile> userProfiles = page.getContent();
-		List<Long> ids = new ArrayList<Long>();
-		for (UserProfile userProfile : userProfiles) {
-			ids.add(userProfile.getId());
-		}
-		// 不知道这里有没有针对批量查询做优化的，如果没有的话，其实可以直接在上面循环直接做掉
-		Iterable<UserAccount> userAccounts = userAccountDao.findAll(ids);
-		Map<Long, UserAccount> temp = new HashMap<Long, UserAccount>();
-		for (UserAccount userAccount : userAccounts) {
-			temp.put(userAccount.getId(), userAccount);
-		}
-
-		List<User> users = new ArrayList<User>();
-		for (UserProfile userProfile : userProfiles) {
-			User user = new User(userProfile);
-			UserAccount account = temp.get(userProfile.getId());
-			if (account != null) {
-				user.setCreateTime(account.getCreateTime());
-				user.setType(account.getType());
-			}
-			users.add(user);
-		}
-		return users;
+	public Page<UserProfile> getUserProfilePageByPhone(int pageNumber, int pageSize, String phone) {
+		List<SearchFilter> filters = new ArrayList<SearchFilter>();
+		filters.add(new SearchFilter("telephone", Operator.EQ, phone));
+		Specification<UserProfile> spec = DynamicSpecifications.bySearchFilter(filters, UserProfile.class);
+		
+		Page<UserProfile> page = userProfileDao.findAll(spec, new PageRequest(pageNumber - 1, pageSize));
+		
+		return page;
+	}
+	/**
+	 * 翻页获取用户Profile列表，根据realname查询
+	 * 
+	 * @param pageNumber
+	 * @param pageSize
+	 * @param realname
+	 * @return
+	 */
+	public Page<UserProfile> getUserProfilePageByName(int pageNumber, int pageSize, String realname) {
+		List<SearchFilter> filters = new ArrayList<SearchFilter>();
+		filters.add(new SearchFilter("realname", Operator.LIKE, realname));
+		Specification<UserProfile> spec = DynamicSpecifications.bySearchFilter(filters, UserProfile.class);
+		
+		Page<UserProfile> page = userProfileDao.findAll(spec, new PageRequest(pageNumber - 1, pageSize));
+		
+		return page;
 	}
 	/**
 	 * 查询单个用户Account信息
@@ -192,36 +152,36 @@ public class UserService {
 		return userAccountDao.findOne(userId);
 	}
 	/**
-	 * 创建新用户
+	 * 查询用户Account列表
 	 * 
-	 * @param account
 	 * @return
 	 */
-	public void createUser(UserAccount account) {
-		UserProfile profile = new UserProfile();
-		profile.setId(account.getId());
-		this.createUser(account, profile);
+	public List<UserAccount> getUserAccountList() {
+		return (List<UserAccount>) userAccountDao.findAll();
 	}
-
+	public List<UserProfile> getUserProfileListByIds(Set<Long> ids) {
+		return (List<UserProfile>) userProfileDao.findAll(ids);
+	}
 	/**
 	 * 创建新用户
 	 * 
 	 * @param account
 	 */
 	public boolean createUser(UserAccount account, UserProfile profile) {
-		if (profile == null)
-			throw new ServiceException("不能使用空的用户基本信息");
-		if (StringUtils.isNotBlank(account.getPlainPassword())) {
-			encryptPassword(account);
+		if (account == null || profile == null)
+			throw new ServiceException("无效的用户信息");
+		
+		if (StringUtils.isBlank(account.getPlainPassword())) {
+			account.setPlainPassword(account.getUsername());
 		}
+		encryptPassword(account);
 
-		account.setCreateTime(clock.getCurrentDate());
 		userAccountDao.save(account);
 
 		profile.setId(account.getId());
+		profile.setCreateTime(clock.getCurrentTimeInMillis());
 		userProfileDao.save(profile);
 		
-//		this.createUserDir(account.getId());
 		return true;
 	}
 
@@ -248,14 +208,13 @@ public class UserService {
 		if (oldProfile == null)
 			return;
 		oldProfile.setAvatar(profile.getAvatar());
+		oldProfile.setCompany(profile.getCompany());
 		oldProfile.setEmail(profile.getEmail());
 		oldProfile.setNickname(profile.getNickname());
 		oldProfile.setRealname(profile.getRealname());
 		oldProfile.setTelephone(profile.getTelephone());
-		oldProfile.setCompany(profile.getCompany());
 		userProfileDao.save(oldProfile);
 	}
-
 	/**
 	 * 更新用户Account信息
 	 * 

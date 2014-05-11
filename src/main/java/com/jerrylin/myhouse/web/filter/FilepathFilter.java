@@ -21,10 +21,11 @@ import com.jerrylin.myhouse.service.AppConfigService;
 
 public class FilepathFilter implements Filter {
 	
-	private Pattern houseImagePattern = Pattern.compile("^/ht\\d+/(.*?)\\.(jpg|png|zip)$", Pattern.CASE_INSENSITIVE);
-	private Pattern bannerImagePattern = Pattern.compile("^/b/\\d+\\.jpg$", Pattern.CASE_INSENSITIVE);
-	private Pattern uploadImagePattern = Pattern.compile("^/\\d+(/d2|/d3)?/[\\da-z]+\\.(jpg|zip)$", Pattern.CASE_INSENSITIVE);
-	
+	private Pattern staticUrlPattern = Pattern.compile("^/(u|h|b|c|download)/(.*?)\\.(jpg|png|zip)$", Pattern.CASE_INSENSITIVE);
+//	private Pattern houseImagePattern = Pattern.compile("^/ht\\d+/(.*?)\\.(jpg|png|zip)$", Pattern.CASE_INSENSITIVE);
+//	private Pattern bannerImagePattern = Pattern.compile("^/b/\\d+\\.jpg$", Pattern.CASE_INSENSITIVE);
+//	private Pattern uploadImagePattern = Pattern.compile("^/\\d+(/d2|/d3)?/[\\da-z]+\\.(jpg|zip)$", Pattern.CASE_INSENSITIVE);
+//	
 	private AppConfigService appConfigService;
 
 	@Override
@@ -41,27 +42,32 @@ public class FilepathFilter implements Filter {
 //		System.out.println(httpRequest.getRequestURI());
 //		System.out.println(httpRequest.getRequestURL());
 		Matcher matcher = null;
-		matcher = houseImagePattern.matcher(requestUri);
+		matcher = staticUrlPattern.matcher(requestUri);
 		if (matcher.matches()) {
-			if (requestUri.endsWith("zip"))
-				httpRequest.getRequestDispatcher(appConfigService.getPackagePrefix() + Encodes.urlDecode(requestUri)).forward(request, response);
-			else
-				httpRequest.getRequestDispatcher(appConfigService.getUploadPrefix() + Encodes.urlDecode(requestUri)).forward(request, response);
+			httpRequest.getRequestDispatcher("/tmp" + Encodes.urlDecode(requestUri)).forward(request, response);
 			return;
 		}
-		matcher = uploadImagePattern.matcher(requestUri);
-		if (matcher.matches()) {
-			if (requestUri.endsWith("jpg"))
-				httpRequest.getRequestDispatcher(appConfigService.getUploadPrefix() + requestUri).forward(request, response);
-			else
-				httpRequest.getRequestDispatcher(appConfigService.getPackagePrefix() + requestUri).forward(request, response);
-			return;
-		}
-		matcher = bannerImagePattern.matcher(requestUri);
-		if (matcher.matches()) {
-			httpRequest.getRequestDispatcher(appConfigService.getBannerPrefix() + requestUri).forward(request, response);
-			return;
-		}
+//		matcher = houseImagePattern.matcher(requestUri);
+//		if (matcher.matches()) {
+//			if (requestUri.endsWith("zip"))
+//				httpRequest.getRequestDispatcher(appConfigService.getPackagePrefix() + Encodes.urlDecode(requestUri)).forward(request, response);
+//			else
+//				httpRequest.getRequestDispatcher(appConfigService.getUploadPrefix() + Encodes.urlDecode(requestUri)).forward(request, response);
+//			return;
+//		}
+//		matcher = uploadImagePattern.matcher(requestUri);
+//		if (matcher.matches()) {
+//			if (requestUri.endsWith("jpg"))
+//				httpRequest.getRequestDispatcher(appConfigService.getUploadPrefix() + requestUri).forward(request, response);
+//			else
+//				httpRequest.getRequestDispatcher(appConfigService.getPackagePrefix() + requestUri).forward(request, response);
+//			return;
+//		}
+//		matcher = bannerImagePattern.matcher(requestUri);
+//		if (matcher.matches()) {
+//			httpRequest.getRequestDispatcher(appConfigService.getBannerPrefix() + requestUri).forward(request, response);
+//			return;
+//		}
 		chain.doFilter(request, response);
 	}
 

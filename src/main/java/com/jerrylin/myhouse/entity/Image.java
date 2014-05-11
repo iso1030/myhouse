@@ -33,6 +33,10 @@ public class Image extends IdEntity {
 	 */
 	private int sort;
 	/**
+	 * 是否显示
+	 */
+	private int display;
+	/**
 	 * 图片所属的房屋
 	 */
 	private long hid;
@@ -66,6 +70,12 @@ public class Image extends IdEntity {
 	}
 	public void setSort(int sort) {
 		this.sort = sort;
+	}
+	public int getDisplay() {
+		return this.display;
+	}
+	public void setDisplay(int display) {
+		this.display = display;
 	}
 	public long getHid() {
 		return this.hid;

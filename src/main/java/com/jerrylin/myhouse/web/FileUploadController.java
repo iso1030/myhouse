@@ -15,6 +15,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -30,6 +31,7 @@ import org.springside.modules.web.MediaTypes;
 
 import com.jerrylin.myhouse.entity.Image;
 import com.jerrylin.myhouse.service.AppConfigService;
+import com.jerrylin.myhouse.service.fs.FileService;
 import com.jerrylin.myhouse.util.TimeUtils;
 
 @RestController
@@ -38,6 +40,9 @@ public class FileUploadController {
 	
 	@Autowired
 	private AppConfigService appConfigService;
+	
+	@Autowired
+	private FileService fileService;
 
 //	@RequestMapping(method = RequestMethod.POST)
 //	@ResponseBody
@@ -109,33 +114,70 @@ public class FileUploadController {
 		return result;
 	}
 	
+	@RequestMapping(value = "/timages",method = RequestMethod.POST, produces = MediaTypes.JSON_UTF_8)
+	public List<Image> tourImages(
+			@RequestParam(value = "id", defaultValue = "0") long houseId,
+			@RequestParam(value = "type", defaultValue = "2") int type,
+			MultipartHttpServletRequest multipartRequest, HttpServletResponse response) {
+		if (houseId <= 0 || (type != Image.D2 && type != Image.D3)) {
+			response.setStatus(HttpStatus.BAD_REQUEST.value());
+			return null;
+		}
+		MultipartFile file = multipartRequest.getFile("fileupload");
+		if (file == null || file.getSize() <= 0) {
+			response.setStatus(HttpStatus.BAD_REQUEST.value());
+			return null;
+		}
+		List<Image> images = fileService.addHouseImage(houseId, type, file);
+		if (images == null) {
+			response.setStatus(HttpStatus.EXPECTATION_FAILED.value());
+			return null;
+		}
+		return images;
+	}
+	
+	@RequestMapping(value = "/avatar",method = RequestMethod.POST, produces = MediaTypes.JSON_UTF_8)
+	public List<String> avatar(MultipartHttpServletRequest multipartRequest, HttpServletResponse response) {
+		MultipartFile file = multipartRequest.getFile("fileupload");
+		if (file == null || file.getSize() <= 0) {
+			response.setStatus(HttpStatus.BAD_REQUEST.value());
+			return null;
+		}
+		String result = fileService.addAvatarImage(file);
+		if (result == null) {
+			response.setStatus(HttpStatus.EXPECTATION_FAILED.value());
+			return null;
+		}
+		List<String> list = new ArrayList<String>();
+		list.add(result);
+		
+		return list;
+	}
 	
 	@RequestMapping(method = RequestMethod.POST, produces = MediaTypes.JSON_UTF_8)
-	public Map<String, Object> upload(
+	public List<String> upload(
 			@RequestParam(value = "type", defaultValue = "") String type, 
 			MultipartHttpServletRequest multipartRequest, HttpServletResponse response) {
-		String uploadDir = appConfigService.getUploadDir();
-		String targetPath = uploadDir;
-		
 		List<String> resultFiles = new ArrayList<String>();
 		for (Iterator<String> it = multipartRequest.getFileNames(); it.hasNext();) {
 			String key = it.next();
-			System.out.println(key);
 			MultipartFile orderFile = multipartRequest.getFile(key);
-			if (orderFile.getSize() > 0) {
-				try {
-					String filename = Identities.randomLong() + "." + getFileExtension(orderFile.getOriginalFilename());
-					String realname = File.separator + TimeUtils.getTodayStr() + File.separator + filename;
-					FileUtils.copyInputStreamToFile(orderFile.getInputStream(), new File(targetPath + realname));
-					resultFiles.add(realname);
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
+			if (orderFile.getSize() <= 0) {
+				resultFiles.add(null);
+				continue;
+			}
+			if ("avatar".equalsIgnoreCase(type)) {
+				String result = fileService.addAvatarImage(orderFile);
+				resultFiles.add(result);
+			} else if ("banner".equalsIgnoreCase(type)) {
+				String result = fileService.addBannerImage(orderFile);
+				resultFiles.add(result);
+			} else if ("cover".equalsIgnoreCase(type)) {
+				String result = fileService.addCoverImage(orderFile);
+				resultFiles.add(result);			
 			}
 		}
-		Map<String, Object> result = new HashMap<String, Object>();
-		result.put("files", resultFiles);
-		return result;
+		return resultFiles;
 	}
 	/**
 	 * 获取文件后缀名

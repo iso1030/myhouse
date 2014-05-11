@@ -6,6 +6,9 @@ import org.springframework.stereotype.Component;
 @Component("appConfigService")
 public class AppConfigService {
 	
+	@Value("${app.base_dir}")
+	private String baseDir;
+	
 	@Value("${app.tmp_dir}")
 	private String tmpDir;
 	
@@ -32,6 +35,10 @@ public class AppConfigService {
 	
 	@Value("${app.banner_prefix}")
 	private String bannerPrefix;
+	
+	public String getBaseDir() {
+		return this.baseDir;
+	}
 	
 	public String getTmpDir() {
 		return this.tmpDir;

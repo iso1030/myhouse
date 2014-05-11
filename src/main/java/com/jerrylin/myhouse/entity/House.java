@@ -1,6 +1,5 @@
 package com.jerrylin.myhouse.entity;
 
-import java.util.Date;
 import java.util.List;
 
 import javax.persistence.Entity;
@@ -38,19 +37,23 @@ public class House extends IdEntity {
 	/**
 	 * 开放时间
 	 */
-	private Date openTime;
+	private long openTime;
+	/**
+	 * 创建时间
+	 */
+	private long createTime;
 	/**
 	 * 上一次的信息更新时间
 	 */
-	private Date lastUpdateTime;
+	private long lastUpdateTime;
 	/**
 	 * 上一次的2d图片上传时间
 	 */
-	private Date lastD2UploadTime;
+	private long lastD2UploadTime;
 	/**
 	 * 上一次的3d图片上传时间
 	 */
-	private Date lastD3UploadTime;
+	private long lastD3UploadTime;
 	/**
 	 * 背景音乐，网页端使用
 	 */
@@ -63,6 +66,14 @@ public class House extends IdEntity {
 	 * 打包下载地址
 	 */
 	private String packageUrl;
+	/**
+	 * 拍摄公司
+	 */
+	private String photographer;
+	/**
+	 * youtube播放地址
+	 */
+	private String youtube;
 	/**
 	 * 所属的用户id
 	 */
@@ -79,6 +90,10 @@ public class House extends IdEntity {
 	 * 3D照片列表
 	 */
 	private List<Image> d3images;
+	/**
+	 * 所属用户Profile详情
+	 */
+	private UserProfile userProfile;
 	
 	@JsonIgnore
 	public String getCode() {
@@ -111,29 +126,34 @@ public class House extends IdEntity {
 	public void setBedrooms(String bedrooms) {
 		this.bedrooms = bedrooms;
 	}
-	public Date getOpenTime() {
+	public long getOpenTime() {
 		return openTime;
 	}
-	public void setOpenTime(Date openTime) {
+	public void setOpenTime(long openTime) {
 		this.openTime = openTime;
 	}
-	
-	public Date getLastUpdateTime() {
+	public long getCreateTime() {
+		return createTime;
+	}
+	public void setCreateTime(long createTime) {
+		this.createTime = createTime;
+	}
+	public long getLastUpdateTime() {
 		return lastUpdateTime;
 	}
-	public void setLastUpdateTime(Date lastUpdateTime) {
+	public void setLastUpdateTime(long lastUpdateTime) {
 		this.lastUpdateTime = lastUpdateTime;
 	}
-	public Date getLastD2UploadTime() {
+	public long getLastD2UploadTime() {
 		return lastD2UploadTime;
 	}
-	public void setLastD2UploadTime(Date lastD2UploadTime) {
+	public void setLastD2UploadTime(long lastD2UploadTime) {
 		this.lastD2UploadTime = lastD2UploadTime;
 	}
-	public Date getLastD3UploadTime() {
+	public long getLastD3UploadTime() {
 		return lastD3UploadTime;
 	}
-	public void setLastD3UploadTime(Date lastD3UploadTime) {
+	public void setLastD3UploadTime(long lastD3UploadTime) {
 		this.lastD3UploadTime = lastD3UploadTime;
 	}
 	public String getBgMusic() {
@@ -153,6 +173,18 @@ public class House extends IdEntity {
 	}
 	public void setPackageUrl(String packageUrl) {
 		this.packageUrl = packageUrl;
+	}
+	public String getPhotographer() {
+		return this.photographer;
+	}
+	public void setPhotographer(String photographer) {
+		this.photographer = photographer;
+	}
+	public String getYoutube() {
+		return this.youtube;
+	}
+	public void setYoutube(String youtube) {
+		this.youtube = youtube;
 	}
 	public long getUid() {
 		return uid;
@@ -181,6 +213,14 @@ public class House extends IdEntity {
 	}
 	public void setD3images(List<Image> d3images) {
 		this.d3images = d3images;
+	}
+	@Transient
+	@JsonIgnore
+	public UserProfile getUserProfile() {
+		return userProfile;
+	}
+	public void setUserProfile(UserProfile userProfile) {
+		this.userProfile = userProfile;
 	}
 	
 	@Override

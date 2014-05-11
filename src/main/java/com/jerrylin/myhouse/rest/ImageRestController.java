@@ -21,7 +21,7 @@ import org.springside.modules.web.MediaTypes;
 import com.jerrylin.myhouse.entity.Image;
 import com.jerrylin.myhouse.entity.UserAccount;
 import com.jerrylin.myhouse.entity.UserProfile;
-import com.jerrylin.myhouse.service.FileService;
+import com.jerrylin.myhouse.service.fs.FileService;
 import com.jerrylin.myhouse.service.house.ImageService;
 
 @RestController

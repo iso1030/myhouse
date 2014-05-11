@@ -1,7 +1,5 @@
 package com.jerrylin.myhouse.entity;
 
-import java.util.Date;
-
 import javax.persistence.Entity;
 import javax.persistence.Table;
 import javax.persistence.Transient;
@@ -39,10 +37,6 @@ public class UserAccount extends IdEntity {
 	 * 密码盐巴
 	 */
 	private String salt;
-	/**
-	 * 注册时间
-	 */
-	private Date createTime;
 	
 	public int getType() {
 		return type;
@@ -78,12 +72,6 @@ public class UserAccount extends IdEntity {
 	}
 	public void setSalt(String salt) {
 		this.salt = salt;
-	}
-	public Date getCreateTime() {
-		return createTime;
-	}
-	public void setCreateTime(Date createTime) {
-		this.createTime = createTime;
 	}
 	@Override
 	public String toString() {

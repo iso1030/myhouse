@@ -27,6 +27,7 @@ import com.jerrylin.myhouse.repository.ImageDao;
 import org.springside.modules.persistence.DynamicSpecifications;
 import org.springside.modules.persistence.SearchFilter;
 import org.springside.modules.persistence.SearchFilter.Operator;
+import org.springside.modules.utils.Identities;
 
 @Component
 @Transactional
@@ -51,10 +52,11 @@ public class HouseService {
 		oldHouse.setAddress(house.getAddress());
 		oldHouse.setArea(house.getArea());
 		oldHouse.setBedrooms(house.getBedrooms());
+		oldHouse.setPhotographer(house.getPhotographer());
 		oldHouse.setBgMusic(house.getBgMusic());
 //		oldHouse.setCode(house.getCode());
 		oldHouse.setCoverImg(house.getCoverImg());
-		oldHouse.setLastUpdateTime(new Date());
+		oldHouse.setLastUpdateTime(new Date().getTime());
 		oldHouse.setOpenTime(house.getOpenTime());
 		oldHouse.setPrice(house.getPrice());
 		oldHouse.setUid(house.getUid());
@@ -75,10 +77,12 @@ public class HouseService {
 	public void createHouse(House house) {
 		if (house == null)
 			return;
-		house.setCode(UUID.randomUUID().toString());
-		house.setLastUpdateTime(new Date());
-		house.setLastD2UploadTime(new Date());
-		house.setLastD3UploadTime(new Date());
+		long currentTime = new Date().getTime();
+		house.setCode(Identities.uuid2());
+		house.setCreateTime(currentTime);
+		house.setLastUpdateTime(currentTime);
+		house.setLastD2UploadTime(currentTime);
+		house.setLastD3UploadTime(currentTime);
 		houseDao.save(house);
 	}
 

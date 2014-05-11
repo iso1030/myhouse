@@ -11,7 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.jerrylin.myhouse.entity.Banner;
 import com.jerrylin.myhouse.repository.BannerDao;
-import com.jerrylin.myhouse.service.FileService;
+import com.jerrylin.myhouse.service.fs.FileService;
 
 @Component
 @Transactional
@@ -26,13 +26,13 @@ public class BannerService {
 	public Banner addBanner(Banner banner) {
 		if (banner == null)
 			return banner;
-		banner.setCreateTime(new Date());
+		banner.setCreateTime(new Date().getTime());
 		bannerDao.save(banner);
 		return banner;
 	}
 	
 	public List<Banner> getBanners(long time) {
-		return bannerDao.findByCreateTimeGreaterThan(new Date(time));
+		return bannerDao.findByCreateTimeGreaterThan(time);
 	}
 	
 	public Page<Banner> getBannerPage(int pageNumber, int pageSize) {

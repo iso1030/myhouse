@@ -15,6 +15,7 @@ public class UserProfile extends IdEntity {
 	private String email;
 	private String company;
 	private String avatar;
+	private long createTime;
 	
 	public String getNickname() {
 		return nickname;
@@ -52,6 +53,12 @@ public class UserProfile extends IdEntity {
 	}
 	public void setCompany(String company) {
 		this.company = company;
+	}
+	public long getCreateTime() {
+		return createTime;
+	}
+	public void setCreateTime(long createTime) {
+		this.createTime = createTime;
 	}
 	@Override
 	public String toString() {

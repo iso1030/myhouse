@@ -1,4 +1,4 @@
-package com.jerrylin.myhouse.service;
+package com.jerrylin.myhouse.service.fs;
 
 import java.io.File;
 import java.io.IOException;
@@ -23,6 +23,8 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springside.modules.utils.Identities;
 
 import com.jerrylin.myhouse.entity.Image;
+import com.jerrylin.myhouse.service.AppConfigService;
+import com.jerrylin.myhouse.service.ServiceException;
 
 @Component
 public class FileService {
@@ -31,6 +33,112 @@ public class FileService {
 	
 	@Autowired
 	private AppConfigService appConfigService;
+	
+//	public String addAvatarImage(MultipartFile file) {
+//		if (file == null)
+//			throw new ServiceException("无效的上传文件");
+//
+//		String baseDir = appConfigService.getBaseDir();
+//
+//		long fileId = Identities.randomLong();
+//		String filename = fileId + "." + getFileExtension(file.getOriginalFilename());
+//		
+//		String tempPath = baseDir + UrlConverter.getTempPath();
+//		String filePath = baseDir + UrlConverter.getAvatarPath(fileId);
+//		
+//		try {
+//			File tmpFile = new File(tempPath + filename);
+//			FileUtils.copyInputStreamToFile(file.getInputStream(), tmpFile);
+//			
+//			Thumbnails.of(tmpFile)
+//					  .sourceRegion(Positions.CENTER, 360, 240)
+//					  .size(180, 120)
+//					  .keepAspectRatio(false)
+//					  .toFile(filePath + filename);
+//			
+//			return filePath + filename;
+//		} catch (IOException e) {
+//			logger.warn("图片处理失败", e);
+//		}
+//		
+//		return null;
+//	}
+	/**
+	 * 添加客户头像图片
+	 * 
+	 * @param file
+	 * @return
+	 */
+	public String addAvatarImage(MultipartFile file) {
+		long fileId = Identities.randomLong();
+		String filename = fileId + "." + getFileExtension(file.getOriginalFilename());
+		String destDir = UrlConverter.getAvatarPath(fileId);
+		return this.addImage(180, 180, destDir, filename, file);
+	}
+	/**
+	 * 添加Banner图片
+	 * 
+	 * @param file
+	 * @return
+	 */
+	public String addBannerImage(MultipartFile file) {
+		long fileId = Identities.randomLong();
+		String filename = fileId + "." + getFileExtension(file.getOriginalFilename());
+		String destDir = UrlConverter.getBannerPath();
+		return this.addImage(640, 960, destDir, filename, file);
+	}
+	/**
+	 * 添加封面图片
+	 * 
+	 * @param file
+	 * @return
+	 */
+	public String addCoverImage(MultipartFile file) {
+		long fileId = Identities.randomLong();
+		String filename = fileId + "." + getFileExtension(file.getOriginalFilename());
+		String destDir = UrlConverter.getCoverImagePath(fileId);
+		return this.addImage(180, 120, destDir, filename, file);
+	}
+	/**
+	 * 添加图片
+	 * 
+	 * @param width    缩略图宽度
+	 * @param height   缩略图高度
+	 * @param destDir  目标目录
+	 * @param filename 文件名
+	 * @param file
+	 * @return
+	 */
+	public String addImage(int width, int height, String destDir, String filename, MultipartFile file) {
+		if (file == null)
+			throw new ServiceException("无效的上传文件");
+		
+		String baseDir = appConfigService.getBaseDir();
+		
+		String tempPath = baseDir + UrlConverter.getTempPath();
+		String filePath = baseDir + destDir;
+		try {
+			File tmpFile = new File(tempPath + filename);
+			FileUtils.copyInputStreamToFile(file.getInputStream(), tmpFile);
+
+			// 创建目标目录，否则缩略图会挂掉
+			File destDirFile = new File(filePath);
+			if (!destDirFile.exists() || !destDirFile.isDirectory()) {
+				destDirFile.mkdirs();
+			}
+			Thumbnails.of(tmpFile)
+					  .sourceRegion(Positions.CENTER, width * 2, height * 2)
+					  .size(width, height)
+					  .keepAspectRatio(false)
+					  .toFile(filePath + filename);
+			
+			return destDir + filename;
+		} catch (IOException e) {
+			logger.warn("图片处理失败", e);
+		}
+		
+		return null;
+	}
 	
 	public String getHouseDirName(long houseId) {
 		return "ht" + houseId;
@@ -214,23 +322,23 @@ public class FileService {
 			thumbFile.delete();
 	}
 	
-	public String addBannerImage(MultipartFile file) {
-		if (file == null)
-			return "";
-		
-		String uploadDir = appConfigService.getBannerDir();
-		
-		String filename = Identities.randomLong() + "." + getFileExtension(file.getOriginalFilename());
-		String realname = File.separator + "b" + File.separator + filename;
-		try {
-			FileUtils.copyInputStreamToFile(file.getInputStream(), new File(uploadDir + realname));
-		} catch (IOException e) {
-			logger.warn("上传Banner图片失败", e);
-			return null;
-		}
-		
-		return realname;
-	}
+//	public String addBannerImage(MultipartFile file) {
+//		if (file == null)
+//			return "";
+//		
+//		String uploadDir = appConfigService.getBannerDir();
+//		
+//		String filename = Identities.randomLong() + "." + getFileExtension(file.getOriginalFilename());
+//		String realname = File.separator + "b" + File.separator + filename;
+//		try {
+//			FileUtils.copyInputStreamToFile(file.getInputStream(), new File(uploadDir + realname));
+//		} catch (IOException e) {
+//			logger.warn("上传Banner图片失败", e);
+//			return null;
+//		}
+//		
+//		return realname;
+//	}
 	
 	/**
 	 * 删除文件系统的banner图片

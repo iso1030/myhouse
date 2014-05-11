@@ -1,31 +1,24 @@
 package com.jerrylin.myhouse.rest;
 
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.UUID;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Validator;
 
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
-import org.springframework.http.HttpHeaders;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.util.UriComponentsBuilder;
-import org.springside.modules.beanvalidator.BeanValidators;
 import org.springside.modules.web.MediaTypes;
 
 import com.jerrylin.myhouse.entity.House;
@@ -47,84 +40,72 @@ public class UserRestController {
 	
 	@Autowired
 	private Validator validator;
-	
+
+	@RequestMapping(value = "/test",method = RequestMethod.GET, produces = MediaTypes.JSON_UTF_8)
+	public List<UserAccount> listCount() {
+		return userService.getUserAccountList();
+	}
+	/**
+	 * 分页查询用户列表
+	 * 
+	 * @param pageNumber
+	 * @param pageSize
+	 * @param telephone
+	 * @return
+	 */
 	@RequestMapping(method = RequestMethod.GET, produces = MediaTypes.JSON_UTF_8)
 	public List<User> list(
-			@RequestParam(value = "page", defaultValue = "1", required = true) int pageNumber, 
-			@RequestParam(value = "size", defaultValue = "100", required = true) int pageSize) {
-		if (pageNumber <= 0)
-			pageNumber = 1;
-		if (pageSize > 100)
-			pageSize = 100;
+			@RequestParam(value = "page", defaultValue = "1", required = true) int pageNumber,
+			@RequestParam(value = "size", defaultValue = "10", required = true) int pageSize,
+			@RequestParam(value = "phone", defaultValue = "") String telephone,
+			@RequestParam(value = "realname", defaultValue = "") String realname) {
+		Page<User> profiles = this.page(pageNumber, pageSize, telephone, realname);
 		
-		List<User> users = userService.getUserList(pageNumber, pageSize);
-		return users;
+		return profiles == null ? new ArrayList<User>() : profiles.getContent();
 	}
-	
-	@RequestMapping(value = "/{uid}", method = RequestMethod.GET, produces = MediaTypes.JSON_UTF_8)
-	public User getUserWithHouse(@PathVariable("uid") Long userId) {
-		User user = userService.getUser(userId);
-		if (user == null) {
-			throw new RestException(HttpStatus.NOT_FOUND, "");
+	/**
+	 * 分页查询用户列表，返回分页信息
+	 * 
+	 * @param pageNumber
+	 * @param pageSize
+	 * @param telephone
+	 * @return
+	 */
+	@RequestMapping(value = "/page", method = RequestMethod.GET, produces = MediaTypes.JSON_UTF_8)
+	public Page<User> page(
+			@RequestParam(value = "page", defaultValue = "1", required = true) int pageNumber,
+			@RequestParam(value = "size", defaultValue = "10", required = true) int pageSize,
+			@RequestParam(value = "phone", defaultValue = "") String telephone,
+			@RequestParam(value = "realname", defaultValue = "") String realname) {
+		pageNumber = Math.max(1, pageNumber);
+		pageSize = Math.min(10, pageSize);
+		
+		Page<UserProfile> profiles = null;
+		if (StringUtils.isNotBlank(telephone)) {
+			profiles = userService.getUserProfilePageByPhone(pageNumber, pageSize, telephone);
+		} else if (StringUtils.isNotBlank(realname)) {
+			profiles = userService.getUserProfilePageByName(pageNumber, pageSize, realname);
+		} else {
+			profiles = userService.getUserProfilePage(pageNumber, pageSize);
 		}
-		
-		Page<House> houses = houseService.getUserHouse(userId, 1, 1000);
-		user.setHouses(houses.getContent());
-		
-		return user;
+		if (profiles != null) {
+			List<UserProfile> profileList = profiles.getContent();
+			List<User> users = new ArrayList<User>();
+			for (UserProfile each : profileList) {
+				users.add(new User(each));
+			}
+			Page<User> page = new PageImpl<User>(users, new PageRequest(pageNumber - 1, pageSize), profiles.getTotalElements());
+			return page;
+		}
+		return null;
 	}
-	
-	@RequestMapping(value = "/update", method = RequestMethod.POST, produces = MediaTypes.JSON_UTF_8)
-	public UserProfile update(HttpServletRequest request, HttpServletResponse response,
-			@RequestParam(value = "id", defaultValue = "0") long userId,
-			@RequestParam(value = "nickname", defaultValue = "") String nickname,
-			@RequestParam(value = "telephone", defaultValue = "") String telephone,
-			@RequestParam(value = "realname", defaultValue = "") String realname,
-			@RequestParam(value = "email", defaultValue = "") String email,
-			@RequestParam(value = "avatar", defaultValue = "") String avatar,
-			@RequestParam(value = "company", defaultValue = "") String company) {
-		UserProfile profile = new UserProfile();
-		profile.setAvatar(avatar);
-		profile.setEmail(email);
-		profile.setId(userId);
-		profile.setNickname(nickname);
-		profile.setRealname(realname);
-		profile.setTelephone(telephone);
-		profile.setCompany(company);
-		
-		userService.updateUserProfile(profile);
-		return profile;
-	}
-	
-	@RequestMapping(value = "/create1", method = RequestMethod.POST, produces = MediaTypes.JSON_UTF_8)
-	public Map<String, Object> create1(HttpServletRequest request, HttpServletResponse response,
-			@RequestParam(value = "id", defaultValue = "0") long userId,
-			@RequestParam(value = "nickname", defaultValue = "") String nickname,
-			@RequestParam(value = "telephone", defaultValue = "") String telephone,
-			@RequestParam(value = "realname", defaultValue = "") String realname,
-			@RequestParam(value = "email", defaultValue = "") String email,
-			@RequestParam(value = "avatar", defaultValue = "") String avatar,
-			@RequestParam(value = "company", defaultValue = "") String company) {
-		UserAccount account = new UserAccount();
-		account.setPlainPassword("1234");
-		account.setType(UserAccount.NORMAL);
-		account.setUsername(UUID.randomUUID().toString());
-		
-		UserProfile profile = new UserProfile();
-		profile.setAvatar(avatar);
-		profile.setEmail(email);
-		profile.setNickname(nickname);
-		profile.setRealname(realname);
-		profile.setTelephone(telephone);
-		profile.setCompany(company);
-		
-		userService.createUser(account, profile);
-		
-		Map<String, Object> result = new HashMap<String, Object>();
-		result.put("id", profile.getId());
-		return result;
-	}
-	
+	/**
+	 * 随便看看
+	 * 
+	 * @param request
+	 * @param response
+	 * @return
+	 */
 	@RequestMapping(value = "/random", method = RequestMethod.GET, produces = MediaTypes.JSON_UTF_8)
 	public List<User> random(HttpServletRequest request, HttpServletResponse response)  {
 		List<User> users = new ArrayList<User>();
@@ -134,7 +115,12 @@ public class UserRestController {
 			return users;
 		
 		if (count <= 5) {
-			return userService.getUserList(1, 5);
+			Page<UserProfile> profilePage = userService.getUserProfilePage(1, 5);
+			List<UserProfile> profileList = profilePage.getContent();
+			for (UserProfile each : profileList) {
+				users.add(new User(each));
+			}
+			return users;
 		}
 		
 		List<Long> list = new ArrayList<Long>();
@@ -144,37 +130,79 @@ public class UserRestController {
 		
 		list = list.subList(0, 5);
 		for (int i = 0, l = list.size(); i < l; ++i) {
-			List<User> user = userService.getUserList(list.get(i).intValue(), 1);
-			users.addAll(user);
+			Page<UserProfile> profilePage = userService.getUserProfilePage(list.get(i).intValue(), 1);
+			List<UserProfile> profileList = profilePage.getContent();
+			for (UserProfile each : profileList) {
+				users.add(new User(each));
+			}
 		}
 		return users;
 	}
-
-	@RequestMapping(value = "/create", method = RequestMethod.POST, consumes = MediaTypes.JSON)
-	public ResponseEntity<?> create(@RequestBody UserProfile profile, UriComponentsBuilder uriBuilder) {
-		// 调用JSR303 Bean Validator进行校验, 异常将由RestExceptionHandler统一处理.
-		BeanValidators.validateWithException(validator, profile);
+	/**
+	 * 查询用户具体信息
+	 * 
+	 * @param userId
+	 * @return
+	 */
+	@RequestMapping(value = "/{uid}", method = RequestMethod.GET, produces = MediaTypes.JSON_UTF_8)
+	public User getUserWithHouse(@PathVariable("uid") long userId) {
+		UserProfile userProfile = userService.getUserProfile(userId);
+		if (userProfile == null) {
+			throw new RestException(HttpStatus.NOT_FOUND, "");
+		}
+		User user = new User(userProfile);
+		Page<House> houses = houseService.getUserHouse(userId, 1, 1000);
+		user.setHouses(houses.getContent());
 		
-		UUID uuid = UUID.randomUUID();
-		UserAccount account = new UserAccount();
-		account.setPlainPassword("test1234");
-		account.setType(UserAccount.NORMAL);
-		account.setUsername(uuid.toString());
-		
-		userService.createUser(account, profile);
-		
-		// 按照Restful风格约定，创建指向新任务的url, 也可以直接返回id或对象.
-		Long id = account.getId();
-		URI uri = uriBuilder.path("/api/v1/user/" + id).build().toUri();
-		HttpHeaders headers = new HttpHeaders();
-		headers.setLocation(uri);
-
-		return new ResponseEntity(headers, HttpStatus.CREATED);
+		return user;
 	}
 	
-	@RequestMapping(value = "/{id}", method = RequestMethod.DELETE)
-	@ResponseStatus(HttpStatus.NO_CONTENT)
-	public void delete(@PathVariable("id") Long userId) {
-		userService.deleteUser(userId);
-	}
+//	@RequestMapping(value = "/update", method = RequestMethod.POST, produces = MediaTypes.JSON_UTF_8)
+//	public UserProfile update(HttpServletRequest request, HttpServletResponse response,
+//			@RequestParam(value = "id", defaultValue = "0") long userId,
+//			@RequestParam(value = "nickname", defaultValue = "") String nickname,
+//			@RequestParam(value = "telephone", defaultValue = "") String telephone,
+//			@RequestParam(value = "realname", defaultValue = "") String realname,
+//			@RequestParam(value = "email", defaultValue = "") String email,
+//			@RequestParam(value = "avatar", defaultValue = "") String avatar,
+//			@RequestParam(value = "company", defaultValue = "") String company) {
+//		UserProfile profile = new UserProfile();
+//		profile.setAvatar(avatar);
+//		profile.setEmail(email);
+//		profile.setId(userId);
+//		profile.setNickname(nickname);
+//		profile.setRealname(realname);
+//		profile.setTelephone(telephone);
+//		profile.setCompany(company);
+//		
+//		userService.updateUserProfile(profile);
+//		return profile;
+//	}
+//	
+//	@RequestMapping(value = "/create", method = RequestMethod.POST, produces = MediaTypes.JSON_UTF_8)
+//	public User create(HttpServletRequest request, HttpServletResponse response,
+//			@RequestParam(value = "id", defaultValue = "0") long userId,
+//			@RequestParam(value = "nickname", defaultValue = "") String nickname,
+//			@RequestParam(value = "telephone", defaultValue = "") String telephone,
+//			@RequestParam(value = "realname", defaultValue = "") String realname,
+//			@RequestParam(value = "email", defaultValue = "") String email,
+//			@RequestParam(value = "avatar", defaultValue = "") String avatar,
+//			@RequestParam(value = "company", defaultValue = "") String company) {
+//		UserAccount account = new UserAccount();
+//		account.setType(UserAccount.NORMAL);
+//		account.setUsername(String.valueOf(Identities.randomLong()));
+//		
+//		UserProfile profile = new UserProfile();
+//		profile.setAvatar(avatar);
+//		profile.setEmail(email);
+//		profile.setNickname(nickname);
+//		profile.setRealname(realname);
+//		profile.setTelephone(telephone);
+//		profile.setCompany(company);
+//		
+//		userService.createUser(account, profile);
+//		
+//		return new User(profile);
+//	}
+	
 }

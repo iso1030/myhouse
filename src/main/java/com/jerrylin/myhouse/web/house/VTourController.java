@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.servlet.ModelAndView;
 
 import com.jerrylin.myhouse.entity.House;
-import com.jerrylin.myhouse.entity.User;
+import com.jerrylin.myhouse.entity.UserProfile;
 import com.jerrylin.myhouse.service.house.HouseService;
 import com.jerrylin.myhouse.service.user.UserService;
 
@@ -39,12 +39,12 @@ public class VTourController {
 		}
 		modelMap.put("house", house);
 		if (house.getUid() > 0) {
-			User user = userService.getUser(house.getUid());
-			if (user != null) {
-				modelMap.put("user", user);
+			UserProfile userProfile = userService.getUserProfile(house.getUid());
+			if (userProfile != null) {
+				modelMap.put("user", userProfile);
 			}
 		}
-		return new ModelAndView("/tmpl/house/vtour");
+		return new ModelAndView("/tour/vtour");
 	}
 	
 	@RequestMapping(value = "/vtour/3d/{houseId}")
@@ -61,9 +61,9 @@ public class VTourController {
 		}
 		modelMap.put("house", house);
 		if (house.getUid() > 0) {
-			User user = userService.getUser(house.getUid());
-			if (user != null) {
-				modelMap.put("user", user);
+			UserProfile userProfile = userService.getUserProfile(house.getUid());
+			if (userProfile != null) {
+				modelMap.put("user", userProfile);
 			}
 		}
 		return new ModelAndView("/tmpl/house/vtour3d");
@@ -83,9 +83,9 @@ public class VTourController {
 		}
 		modelMap.put("house", house);
 		if (house.getUid() > 0) {
-			User user = userService.getUser(house.getUid());
-			if (user != null) {
-				modelMap.put("user", user);
+			UserProfile userProfile = userService.getUserProfile(house.getUid());
+			if (userProfile != null) {
+				modelMap.put("user", userProfile);
 			}
 		}
 		return new ModelAndView("/tmpl/house/vtourinfo");

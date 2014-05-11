@@ -27,8 +27,8 @@ import org.springside.modules.utils.Identities;
 import org.springside.modules.web.MediaTypes;
 
 import com.jerrylin.myhouse.entity.Banner;
-import com.jerrylin.myhouse.service.FileService;
 import com.jerrylin.myhouse.service.banner.BannerService;
+import com.jerrylin.myhouse.service.fs.FileService;
 
 @Controller
 @RequestMapping(value="/banner")

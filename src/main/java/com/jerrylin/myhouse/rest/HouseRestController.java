@@ -42,7 +42,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 import com.jerrylin.myhouse.entity.House;
 import com.jerrylin.myhouse.entity.Image;
 import com.jerrylin.myhouse.service.AppConfigService;
-import com.jerrylin.myhouse.service.FileService;
+import com.jerrylin.myhouse.service.fs.FileService;
 import com.jerrylin.myhouse.service.house.HouseService;
 import com.jerrylin.myhouse.service.house.ImageService;
 import com.jerrylin.myhouse.util.UrlGenerator;
@@ -124,8 +124,8 @@ public class HouseRestController {
 		house.setBgMusic(bgMusic);
 		house.setCoverImg(coverImg);
 		house.setId(houseId);
-		house.setLastUpdateTime(new Date());
-		house.setOpenTime(new Date(openTime));
+		house.setLastUpdateTime(new Date().getTime());
+		house.setOpenTime(openTime);
 		house.setPrice(price);
 		house.setUid(userId);
 		
@@ -151,7 +151,7 @@ public class HouseRestController {
 		house.setBedrooms(bedrooms);
 		house.setBgMusic(bgMusic);
 		house.setCoverImg(coverImg);
-		house.setOpenTime(new Date(openTime));
+		house.setOpenTime(openTime);
 		house.setPrice(price);
 		house.setUid(userId);
 		

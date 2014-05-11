@@ -6,8 +6,12 @@
 package com.jerrylin.myhouse.web.house;
 
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import javax.servlet.ServletRequest;
 import javax.servlet.http.HttpServletRequest;
@@ -23,6 +27,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.ui.ModelMap;
+import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -36,40 +41,26 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.jerrylin.myhouse.entity.House;
 import com.jerrylin.myhouse.entity.Image;
+import com.jerrylin.myhouse.entity.User;
+import com.jerrylin.myhouse.entity.UserProfile;
 import com.jerrylin.myhouse.service.AppConfigService;
-import com.jerrylin.myhouse.service.FileService;
 import com.jerrylin.myhouse.service.account.ShiroDbRealm.ShiroUser;
+import com.jerrylin.myhouse.service.fs.FileService;
 import com.jerrylin.myhouse.service.house.HouseService;
 import com.jerrylin.myhouse.service.house.ImageService;
+import com.jerrylin.myhouse.service.user.UserService;
 
 import org.springside.modules.web.MediaTypes;
 import org.springside.modules.web.Servlets;
 
 import com.google.common.collect.Maps;
 
-/**
- * House管理的Controller, 使用Restful风格的Urls:
- * 
- * List page : GET /house/
- * Create page : GET /house/create
- * Create action : POST /house/create
- * Update page : GET /house/update/{id}
- * Update action : POST /house/update
- * Delete action : GET /house/delete/{id}
- * 
- * @author calvin
- */
 @Controller
 @RequestMapping(value = "/house")
 public class HouseController {
-
-	private static final String PAGE_SIZE = "10";
-
-	private static Map<String, String> sortTypes = Maps.newLinkedHashMap();
-	static {
-		sortTypes.put("auto", "自动");
-		sortTypes.put("title", "标题");
-	}
+	
+	@Autowired
+	private UserService userService;
 
 	@Autowired
 	private HouseService houseService;
@@ -80,9 +71,6 @@ public class HouseController {
 	@Autowired
 	private FileService fileService;
 	
-	@Autowired
-	private AppConfigService appConfigService;
-
 	@RequestMapping(value = "/xml/krpano/{houseId}")
 	public ModelAndView krpanoXml(HttpServletRequest request, HttpServletResponse response, ModelMap modelMap,
 			@PathVariable(value = "houseId") long houseId) {
@@ -169,34 +157,71 @@ public class HouseController {
 
 	@RequestMapping(method = RequestMethod.GET)
 	public ModelAndView page(
-			@RequestParam(value = "userId", defaultValue = "-1") long userId,
 			@RequestParam(value = "page", defaultValue = "1") int pageNumber,
-			@RequestParam(value = "page.size", defaultValue = PAGE_SIZE) int pageSize,
-			@RequestParam(value = "sortType", defaultValue = "auto") String sortType, Model model,
+			@RequestParam(value = "page.size", defaultValue = "10") int pageSize,
+			@RequestParam(value = "userId", defaultValue = "-1") long userId,
+			@RequestParam(value = "query", defaultValue = "") String query, Model model,
 			ServletRequest request) {
+		Page<House> houses = null;
 		if (userId > 0) {
-			Page<House> houses = houseService.getUserHouse(userId, pageNumber, pageSize);
-			model.addAttribute("page", houses);
+			houses = houseService.getUserHouse(userId, pageNumber, pageSize);
 		} else {
-			Page<House> houses = houseService.getHouse(pageNumber, pageSize);
+			houses = houseService.getHouse(pageNumber, pageSize);
+		}
+		if (houses != null && houses.getContent() != null) {
+			Set<Long> idSet = new HashSet<Long>();
+			for (House house : houses.getContent()) {
+				if (house.getUid() > 0)
+					idSet.add(house.getId());
+			}
+			if (idSet.size() > 0) {
+				List<UserProfile> users = userService.getUserProfileListByIds(idSet);
+				Map<Long, UserProfile> temp = new HashMap<Long, UserProfile>();
+				for (UserProfile user : users) {
+					temp.put(user.getId(), user);
+				}
+				
+				for (House house : houses.getContent()) {
+					if (temp.get(house.getUid()) != null)
+						house.setUserProfile(temp.get(house.getUid()));
+				}
+			}
 			model.addAttribute("page", houses);
 		}
 
-		return new ModelAndView("/tmpl/house/list");
+		return new ModelAndView("/tour/list");
+	}
+	
+	@RequestMapping(value = "/add", method = RequestMethod.GET)
+	public ModelAndView add(@RequestParam(value = "userId", defaultValue = "-1") long userId,
+			HttpServletRequest request, HttpServletResponse response, ModelMap modelMap) {
+		House house = new House();
+		house.setUid(userId);
+		house.setAddress("");
+		
+		houseService.createHouse(house);
+		modelMap.put("house", house);
+		return new ModelAndView("/tour/edit");
 	}
 
 	@RequestMapping(value = "/edit", method = RequestMethod.GET)
-	public ModelAndView edit(@RequestParam(value = "houseId", defaultValue = "-1") long houseId,
+	public ModelAndView edit(
+			@RequestParam(value = "houseId", defaultValue = "-1") long houseId,
+			@RequestParam(value = "m", defaultValue = "") String subModule,
 			HttpServletRequest request, HttpServletResponse response, ModelMap modelMap) {
-//		if (houseId <= 0) {
-//			response.setStatus(HttpStatus.NOT_FOUND.value());
-//			return null;
-//		}
+		if (houseId <= 0) {
+			response.setStatus(HttpStatus.NOT_FOUND.value());
+			return null;
+		}
 		House house = houseService.getHouse(houseId);
-		if (house != null) {
-
-			modelMap.put("house", house);
-			
+		if (house == null) {
+			response.setStatus(HttpStatus.NOT_FOUND.value());
+			return null;
+		}
+		modelMap.put("house", house);
+		modelMap.put("submodule", subModule);
+		
+		if ("photos".equals(subModule) || "panoramas".equals(subModule)) {
 			List<Image> images = imageService.getHouseImage(house.getId());
 			List<Image> d2images = new ArrayList<Image>();
 			List<Image> d3images = new ArrayList<Image>();
@@ -213,54 +238,47 @@ public class HouseController {
 			modelMap.put("d2images", d2images);
 			modelMap.put("d3images", d3images);
 		}
-		return new ModelAndView("/tmpl/house/edit");
+		return new ModelAndView("/tour/edit");
 	}
-
-	@RequestMapping(value = "create", method = RequestMethod.POST)
-	public String create(@Valid House newHouse, RedirectAttributes redirectAttributes) {
-//		newHouse.setUid(getCurrentUserId());
-
-		houseService.createHouse(newHouse);
-		redirectAttributes.addFlashAttribute("message", "创建任务成功");
-		return "redirect:/task/";
-	}
-
-	@RequestMapping(value = "update/{id}", method = RequestMethod.GET)
-	public String updateForm(@PathVariable("id") Long id, Model model) {
-		model.addAttribute("task", houseService.getHouse(id));
-		model.addAttribute("action", "update");
-		return "task/taskForm";
-	}
-
-	@RequestMapping(value = "update", method = RequestMethod.POST)
-	public String update(@Valid @ModelAttribute("task") House task, RedirectAttributes redirectAttributes) {
-		houseService.createHouse(task);
-		redirectAttributes.addFlashAttribute("message", "更新任务成功");
-		return "redirect:/task/";
-	}
-
-	@RequestMapping(value = "delete/{id}")
-	public String delete(@PathVariable("id") Long id, RedirectAttributes redirectAttributes) {
-		houseService.deleteHouse(id);
-		redirectAttributes.addFlashAttribute("message", "删除任务成功");
-		return "redirect:/task/";
-	}
-
-	/**
-	 * 所有RequestMapping方法调用前的Model准备方法, 实现Struts2 Preparable二次部分绑定的效果,先根据form的id从数据库查出House对象,再把Form提交的内容绑定到该对象上。
-	 * 因为仅update()方法的form中有id属性，因此仅在update时实际执行.
-	 */
-	@ModelAttribute
-	public void getHouse(@RequestParam(value = "id", defaultValue = "-1") Long id, Model model) {
-		if (id != -1) {
-			model.addAttribute("task", houseService.getHouse(id));
-		}
+	
+	
+	@RequestMapping(value = "/addorupdate", method = RequestMethod.POST, produces = MediaTypes.JSON_UTF_8)
+	@ResponseBody
+	public House addOrUpdate(HttpServletRequest request, HttpServletResponse response,
+			@RequestParam(value = "id", defaultValue = "0") long houseId,
+			@RequestParam(value = "address", defaultValue = "") String address,
+			@RequestParam(value = "price", defaultValue = "0") Long price,
+			@RequestParam(value = "area", defaultValue = "0") Long area,
+			@RequestParam(value = "bedrooms", defaultValue = "") String bedrooms,
+			@RequestParam(value = "photographer", defaultValue = "") String photographer,
+			@RequestParam(value = "youtube", defaultValue = "") String youtube,
+			@RequestParam(value = "openTime", defaultValue = "0") long openTime,
+			@RequestParam(value = "bgMusic", defaultValue = "") String bgMusic,
+			@RequestParam(value = "coverImg", defaultValue = "") String coverImg,
+			@RequestParam(value = "userId", defaultValue = "0") long userId) {
+		House house = new House();
+		house.setAddress(address);
+		house.setArea(area);
+		house.setBedrooms(bedrooms);
+//		house.setBgMusic(bgMusic);
+//		house.setCode(code);
+		house.setCoverImg(coverImg);
+		house.setId(houseId);
+		house.setLastUpdateTime(new Date().getTime());
+		house.setOpenTime(openTime);
+		house.setPhotographer(photographer);
+		house.setPrice(price);
+		house.setUid(userId);
+//		house.setYoutube(youtube);
+		
+		houseService.updateHouse(house);
+		return house;
 	}
 
 	/**
 	 * 取出Shiro中的当前用户Id.
 	 */
-	private Long getCurrentUserId() {
+	public Long getCurrentUserId() {
 		ShiroUser user = (ShiroUser) SecurityUtils.getSubject().getPrincipal();
 		return user.id;
 	}
