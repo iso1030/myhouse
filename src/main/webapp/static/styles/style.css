@@ -73,7 +73,7 @@ a,a:hover{color:#fff;}
 .m-nav li .icn4{background-position:-180px 0;}
 .m-box{padding:10px;border-radius:10px;background-color:#fff;color:#000;}
 .m-box .cnt{width:960px;}
-.m-box .frm{width:100%;height:500px;}
+.m-box .frm{width:100%;height:100%;}
 .m-box .ant{position:relative;margin:10px 0;}
 .m-box .ant .btn{display:block;height:36px;line-height:36px;width:192px;margin:0 auto;background-position:0 -60px;color:#069;text-align:center;}
 .m-box .ant .btn:hover{background-position:0 -100px;}

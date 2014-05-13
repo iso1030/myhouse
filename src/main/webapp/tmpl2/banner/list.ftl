@@ -26,12 +26,12 @@
               <#list blist as i>
               <div class="col-sm-6 col-md-3" id="banner${i.id}">
 	  			<input type="hidden" value="${i.id}">
-	  			<input type="hidden" id="createTime${i.id}" value="${i.createTime}">
+	  			<input type="hidden" id="createTime${i.id}" value="${i.createTime!0}">
                 <div class="thumbnail">
                   <img data-id="${i.id}" data-src="${i.url}"
-                    alt="" style="width:200px;height:300px;" src="${i.thumbnail}">
+                    alt="" style="width:200px;height:300px;" <#if i.thumbnail?has_content>src="${i.thumbnail}"</#if>>
                   <div class="caption">
-                  	<p><input type="text" id="user${i.id}" value="${i.uid}" placeholder="关联用户ID"/></p>
+                  	<p><input type="text" id="user${i.id}" value="${i.uid!0}" placeholder="关联用户ID"/></p>
                     <p>上传时间：${i.createTime?default(0)?number_to_date?string("yyyy-MM-dd")}</p>
                     <p><button type="button" id="delBtn${i.id}" data-id="${i.id}" class="btn btn-primary btn-xs">Delete</button> <a href="${i.url}" class="btn btn-default btn-xs" target="_blank">Origin</a></p>
                   </div>

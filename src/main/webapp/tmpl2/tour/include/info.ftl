@@ -52,6 +52,12 @@
 		</div>
 	</div>
 	<div class="form-group">
+		<label for="company" class="col-sm-2 control-label">拍摄公司</label>
+		<div class="col-sm-8">
+		  <textarea class="form-control" id="description" name="description" placeholder="less than 1000 character">${house.description!""}</textarea>
+		</div>
+	</div>
+	<div class="form-group">
 		<div class="col-sm-offset-2 col-sm-8">
 		  <button type="button" class="btn btn-default" id="saveInfoBtn">Save</button>
 		</div>

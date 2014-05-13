@@ -65,6 +65,7 @@ create table mh_house (
     package_url varchar(128),
     photographer varchar(128),
     youtube varchar(128),
+    description varchar(1024),
     uid bigint not null,
     primary key (id)
 );

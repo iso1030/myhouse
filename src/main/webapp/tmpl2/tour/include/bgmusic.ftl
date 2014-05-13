@@ -4,7 +4,7 @@
 	<#list musics as music>
 	<div class="radio">
 	  <label>
-	    <input type="radio" name="music" id="musicRadio" value="${music}" checked>${music} <a href="${music}" target="_blank"><span class="glyphicon glyphicon-headphones"></span></a>
+	    <input type="radio" name="music" id="musicRadio" value="${music}">${music} <a href="${music}" target="_blank"><span class="glyphicon glyphicon-headphones"></span></a>
 	  </label>
 	</div>
 	</#list>

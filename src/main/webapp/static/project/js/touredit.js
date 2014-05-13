@@ -1,6 +1,7 @@
 (function(){
 	function addOrUpdate() {
     	var domForm = $("#tourForm").get(0);
+    	var openTime = $("#openTime").datepicker("getDate");
     	$.ajax({
     	    type: 'POST',
     		url: '/house/addorupdate',
@@ -11,9 +12,10 @@
     			area: domForm.area.value,
     			bedrooms: domForm.bedrooms.value,
     			photographer: domForm.photographer.value,
-    			openTime: $("#openTime").datepicker("getDate").getTime(),
+    			openTime: !openTime?0:openTime.getTime(),
     			coverImg: domForm.coverImg.value,
-    			userId: domForm.uid.value
+    			userId: domForm.uid.value,
+    			description: domForm.description.value.trim()
     		},
     		dataType: 'json',
     		success: function(response){
@@ -41,8 +43,8 @@
 	    				alert(response.error);
 	    				return;
 	    			}
-	    			$("#packBtn").parent().append('<a href="'+response.url+'" target="_blank">http://'+location.host+response.url+'</a>');
-	    			$("#packBtn").remove();
+//	    			$("#packBtn").parent().append('<a href="'+response.url+'" target="_blank">http://'+location.host+response.url+'</a>');
+	    			$("#packBtn").prev().html('<a href="'+response.url+'" target="_blank">http://'+location.host+response.url+'</a>');
 	    			alert("打包成功");
 	    		},
 	    		error: function(request, status, error){

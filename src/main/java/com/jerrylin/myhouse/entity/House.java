@@ -75,6 +75,10 @@ public class House extends IdEntity {
 	 */
 	private String youtube;
 	/**
+	 * 房屋简介
+	 */
+	private String description;
+	/**
 	 * 所属的用户id
 	 */
 	private long uid;
@@ -185,6 +189,12 @@ public class House extends IdEntity {
 	}
 	public void setYoutube(String youtube) {
 		this.youtube = youtube;
+	}
+	public String getDescription() {
+		return description;
+	}
+	public void setDescription(String description) {
+		this.description = description;
 	}
 	public long getUid() {
 		return uid;

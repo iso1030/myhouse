@@ -63,14 +63,14 @@
         	});
         	var currentHash = "#";
         	window.loaded = function(){
-			    $("#contentFrame").css("height", /^\moreinfo/.test(currentHash)?"330px":"500px");
+			    $("#contentFrame").css("height", /^\moreinfo/.test(currentHash)?"380px":"500px");
         	};
         	function handler(newHash, initial) {
         		newHash = newHash||"slideshow";
         		currentHash = newHash;
         		$("#contentFrame").css("height","0px");
 			    $("#contentFrame").attr("src","/vtour/"+newHash+"/${house.id}");
-			    //$("#contentFrame").css("height", /^moreinfo/.test(newHash)?"330px":"500px");
+			    //$("#contentFrame").css("height", /^moreinfo/.test(newHash)?"380px":"500px");
 			    if (initial) {
 			    	// nothing todo
 			    } else {

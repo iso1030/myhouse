@@ -19,7 +19,7 @@
 		  <div class="panel panel-default">
 		  	<div class="panel-body">
 		  		<p><span class="glyphicon glyphicon-eye-open"></span> Tour Link: <a href="/vtour/${house.id}" target="_blank">http://<script>document.write(location.host)</script>/vtour/${house.id}</a></p>
-		  		<p><span class="glyphicon glyphicon-download"></span> Original Photos Download: <#if house.packageUrl?has_content><a href="${house.packageUrl!""}" target="_blank">http://<script>document.write(location.host)</script>${house.packageUrl!""}</a><#else><button type="button" class="btn btn-primary btn-xs" data-id="${house.id}" id="packBtn">Pack Tour</button></#if></p>
+		  		<p><span class="glyphicon glyphicon-download"></span> Original Photos Download: <span><#if house.packageUrl?has_content><a href="${house.packageUrl!""}" target="_blank">http://<script>document.write(location.host)</script>${house.packageUrl!""}</a><#else></#if></span> <button type="button" class="btn btn-primary btn-xs" data-id="${house.id}" id="packBtn">Pack Tour</button></p>
 		  	</div>
 		  </div>
 		  

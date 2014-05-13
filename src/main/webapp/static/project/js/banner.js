@@ -9,6 +9,7 @@
     		mimeType: 'application/json',
     		success: function(response){
     			alert("保存成功");
+    			location.reload();
     		},
     		error: function(request, status, error){
     			alert("保存失败");

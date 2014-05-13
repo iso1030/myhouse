@@ -6,8 +6,10 @@
 package com.jerrylin.myhouse.service.house;
 
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -59,6 +61,7 @@ public class HouseService {
 		oldHouse.setLastUpdateTime(new Date().getTime());
 		oldHouse.setOpenTime(house.getOpenTime());
 		oldHouse.setPrice(house.getPrice());
+		oldHouse.setDescription(house.getDescription());
 		oldHouse.setUid(house.getUid());
 		
 		houseDao.save(oldHouse);
@@ -114,6 +117,24 @@ public class HouseService {
 
 	public List<House> getAllHouse() {
 		return (List<House>) houseDao.findAll();
+	}
+	
+	public Page<House> getHousePage(int pageNumber, int pageSize, Map<String, Object> searchParams) {
+		PageRequest pageRequest = buildPageRequest(pageNumber, pageSize, "auto");
+		Map<String, SearchFilter> filters = new HashMap<String, SearchFilter>();
+		if (searchParams != null) {
+			if (searchParams.get("uid") != null) {
+				SearchFilter filter = new SearchFilter("uid", Operator.EQ, searchParams.get("uid"));
+				filters.put("uid", filter);
+			}
+			if (searchParams.get("address") != null) {
+				SearchFilter filter = new SearchFilter("address", Operator.LIKE, searchParams.get("address"));
+				filters.put("address", filter);
+			}
+		}
+		Specification<House> spec = DynamicSpecifications.bySearchFilter(filters.values(), House.class);
+		
+		return houseDao.findAll(spec, pageRequest);
 	}
 	
 	public Page<House> getHouse(int pageNumber, int pageSize) {

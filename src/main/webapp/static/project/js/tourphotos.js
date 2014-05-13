@@ -9,6 +9,7 @@
     		mimeType: 'application/json',
     		success: function(response){
     			alert("保存成功");
+    			location.reload();
     		},
     		error: function(request, status, error){
     			alert("保存失败");
@@ -19,7 +20,7 @@
 		$("#delBtn"+id).button('loading');
 		$.ajax({
     	    type: 'DELETE',
-    		url: '/banner/delete/?id=' + id + "&type=2",
+    		url: '/house/deleteimage/?imageId=' + id + "&type=2",
     		success: function(response) {
     			$("#photo"+id).remove();
     		},
@@ -99,5 +100,29 @@
     			$("#progress").css("width", progress + "%");
     		}
     	});
+		$("#packBtn").click(function(){
+			$(this).button("loading");
+			var id = $(this).data("id");
+			$.ajax({
+	    	    type: 'POST',
+	    		url: '/house/package?id='+id,
+	    		data: {},
+	    		dataType: 'json',
+	    		success: function(response){
+	    			$("#packBtn").button("reset");
+	    			if (response.error) {
+	    				alert(response.error);
+	    				return;
+	    			}
+//	    			$("#packBtn").parent().append('<a href="'+response.url+'" target="_blank">http://'+location.host+response.url+'</a>');
+	    			$("#packBtn").prev().html('<a href="'+response.url+'" target="_blank">http://'+location.host+response.url+'</a>');
+	    			alert("打包成功");
+	    		},
+	    		error: function(request, status, error){
+	    			$("#packBtn").button("reset");
+	    			alert("打包失败");
+	    		}
+	    	});
+		});
     });
 })();

@@ -193,10 +193,19 @@ public class HouseController {
 			@RequestParam(value = "query", defaultValue = "") String query, Model model,
 			ServletRequest request) {
 		Page<House> houses = null;
+		Map<String, Object> queryParams = new HashMap<String, Object>();
 		if (userId > 0) {
-			houses = houseService.getUserHouse(userId, pageNumber, pageSize);
+			queryParams.put("uid", userId);
+		}
+		if (StringUtils.isNotBlank(query)) {
+			queryParams.put("address", query);
+			houses = houseService.getHousePage(pageNumber, pageSize, queryParams);
 		} else {
-			houses = houseService.getHouse(pageNumber, pageSize);
+			if (userId > 0) {
+				houses = houseService.getUserHouse(userId, pageNumber, pageSize);
+			} else {
+				houses = houseService.getHouse(pageNumber, pageSize);
+			}
 		}
 		if (houses != null && houses.getContent() != null) {
 			Set<Long> idSet = new HashSet<Long>();
@@ -289,7 +298,8 @@ public class HouseController {
 			@RequestParam(value = "openTime", defaultValue = "0") long openTime,
 			@RequestParam(value = "bgMusic", defaultValue = "") String bgMusic,
 			@RequestParam(value = "coverImg", defaultValue = "") String coverImg,
-			@RequestParam(value = "userId", defaultValue = "0") long userId) {
+			@RequestParam(value = "userId", defaultValue = "0") long userId,
+			@RequestParam(value = "description", defaultValue = "") String description) {
 		House house = new House();
 		house.setAddress(address);
 		house.setArea(area);
@@ -303,6 +313,7 @@ public class HouseController {
 		house.setPhotographer(photographer);
 		house.setPrice(price);
 		house.setUid(userId);
+		house.setDescription(description);
 //		house.setYoutube(youtube);
 		
 		houseService.updateHouse(house);

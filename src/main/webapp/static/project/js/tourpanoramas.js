@@ -100,5 +100,29 @@
     			$("#progress").css("width", progress + "%");
     		}
     	});
+		$("#packBtn").click(function(){
+			$(this).button("loading");
+			var id = $(this).data("id");
+			$.ajax({
+	    	    type: 'POST',
+	    		url: '/house/package?id='+id,
+	    		data: {},
+	    		dataType: 'json',
+	    		success: function(response){
+	    			$("#packBtn").button("reset");
+	    			if (response.error) {
+	    				alert(response.error);
+	    				return;
+	    			}
+//	    			$("#packBtn").parent().append('<a href="'+response.url+'" target="_blank">http://'+location.host+response.url+'</a>');
+	    			$("#packBtn").prev().html('<a href="'+response.url+'" target="_blank">http://'+location.host+response.url+'</a>');
+	    			alert("打包成功");
+	    		},
+	    		error: function(request, status, error){
+	    			$("#packBtn").button("reset");
+	    			alert("打包失败");
+	    		}
+	    	});
+		});
     });
 })();

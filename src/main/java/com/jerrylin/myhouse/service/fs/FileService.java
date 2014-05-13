@@ -257,11 +257,12 @@ public class FileService {
 				for (FileHeader each : headerList) {
 					if (each.isDirectory() || each.getFileName().indexOf(File.separator)>=0)
 						continue;
-					// 是否重新生成新的名字？？
+					// 是否重新生成新的名字，否则上传一样的文件，数据库里存在两条重复数据，删除掉其中一条会导致另一条的图片丢失
 					String originFilename = each.getFileName();
-					String targetFilename = originFilename;
+					String targetFilename = Identities.randomLong() + "." + getFileExtension(originFilename);
 					
-					zipFile.extractFile(each, localImageDir);
+					zipFile.extractFile(each, localImageDir, null, targetFilename);
+					//zipFile.extractFile(each, localImageDir);
 					
 					Thumbnails.of(localImageDir + targetFilename)
 					          .sourceRegion(Positions.CENTER, 600, 400)
