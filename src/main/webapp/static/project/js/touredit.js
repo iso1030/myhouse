@@ -5,7 +5,7 @@
     	    type: 'POST',
     		url: '/house/addorupdate',
     		data: {
-    			id: domForm.id.value,
+    			id: domForm.houseId.value,
     			address: domForm.address.value, 
     			price: domForm.price.value,
     			area: domForm.area.value,
@@ -37,7 +37,11 @@
 	    		dataType: 'json',
 	    		success: function(response){
 	    			$("#packBtn").button("reset");
-	    			$("#packBtn").parent().append('<a href="'+response.url+'" target="_blank">'+response.url+'</a>');
+	    			if (response.error) {
+	    				alert(response.error);
+	    				return;
+	    			}
+	    			$("#packBtn").parent().append('<a href="'+response.url+'" target="_blank">http://'+location.host+response.url+'</a>');
 	    			$("#packBtn").remove();
 	    			alert("打包成功");
 	    		},

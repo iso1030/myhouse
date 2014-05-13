@@ -11,6 +11,7 @@ public class UrlConverter {
 	 * 分目录划分的hash值
 	 */
 	public static final int MAX_DIR_HASH = 100;
+	public static final String MUSIC_DIR = "music";
 	/**
 	 * 上传文件的临时保存目录
 	 */
@@ -34,6 +35,14 @@ public class UrlConverter {
 	 */
 	public static final String COVER_IMAGE_DIR = "c";
 
+	public static String getMusicPath() {
+		StringBuffer sb = new StringBuffer();
+		sb.append(File.separator);
+		sb.append(MUSIC_DIR);
+		sb.append(File.separator);
+		
+		return sb.toString();
+	}
 	/**
 	 * 获取上传文件的临时保存目录，目录用日期作为划分策略
 	 * 

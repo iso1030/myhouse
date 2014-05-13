@@ -116,7 +116,7 @@ public class FileUploadController {
 	
 	@RequestMapping(value = "/timages",method = RequestMethod.POST, produces = MediaTypes.JSON_UTF_8)
 	public List<Image> tourImages(
-			@RequestParam(value = "id", defaultValue = "0") long houseId,
+			@RequestParam(value = "houseId", defaultValue = "0") long houseId,
 			@RequestParam(value = "type", defaultValue = "2") int type,
 			MultipartHttpServletRequest multipartRequest, HttpServletResponse response) {
 		if (houseId <= 0 || (type != Image.D2 && type != Image.D3)) {

@@ -1,7 +1,7 @@
 <#escape x as x?html>
 <div class="row">
   <form class="form-inline" onsubmit="return false;" id="tourForm" method="POST" enctype="multipart/form-data" role="form">
-  	<input type="hidden" name="id" value="${house.id!"0"}"/>
+  	<input type="hidden" name="houseId" value="${house.id!"0"}"/>
   	<div class="form-group">
 		<label for="fileupload" class="control-label">上传打包图片</label>
 		<input type="file" class="form-control" id="fileupload" name="fileupload" data-url="/upload/timages?houseId=${house.id!"0"}&type=2">

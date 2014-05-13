@@ -21,7 +21,7 @@ import com.jerrylin.myhouse.service.AppConfigService;
 
 public class FilepathFilter implements Filter {
 	
-	private Pattern staticUrlPattern = Pattern.compile("^/(u|h|b|c|download)/(.*?)\\.(jpg|png|zip)$", Pattern.CASE_INSENSITIVE);
+	private Pattern staticUrlPattern = Pattern.compile("^/(u|h|b|c|download|music)/(.*?)\\.(jpg|png|zip|mp3)$", Pattern.CASE_INSENSITIVE);
 //	private Pattern houseImagePattern = Pattern.compile("^/ht\\d+/(.*?)\\.(jpg|png|zip)$", Pattern.CASE_INSENSITIVE);
 //	private Pattern bannerImagePattern = Pattern.compile("^/b/\\d+\\.jpg$", Pattern.CASE_INSENSITIVE);
 //	private Pattern uploadImagePattern = Pattern.compile("^/\\d+(/d2|/d3)?/[\\da-z]+\\.(jpg|zip)$", Pattern.CASE_INSENSITIVE);

@@ -5,7 +5,7 @@
     	    type: 'POST',
     		url: '/user/addorupdate',
     		data: {
-    			id: domFrom.id.value,
+    			id: domFrom.userId.value,
     			nickname: domFrom.nickname.value, 
     			avatar: domFrom.avatar.value,
     			telephone: domFrom.telephone.value,

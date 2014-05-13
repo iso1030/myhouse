@@ -5,23 +5,57 @@
 <title>NEC：更好的CSS方案</title>
 <meta name="keywords" content=""/>
 <meta name="description" content=""/>
-<link rel="stylesheet" href="/static/styles/style.css"/>
+<link rel="stylesheet" href="../static/styles/style.css"/>
+<script src="../static/jquery/1.9.1/jquery.min.js"></script>
 </head>
 <body>
 <div class="g-doc">
     <div class="g-hd">
     	<ul class="m-nav">
-    		<li><a href="#"><img src="/static/images/slideshow1.png">Slide Show</a></li>
-    		<li><a href="#"><img src="/static/images/panorama1.png">Panorama</a></li>
-    		<li><a href="#"><img src="/static/images/home1.png">More Info</a></li>
+    		<li><a href="#"><img src="../static/images/slideshow1.png">Slide Show</a></li>
+    		<li><a href="#"><img src="../static/images/panorama1.png">Panorama</a></li>
+    		<li><a href="#"><img src="../static/images/home1.png">More Info</a></li>
+    	</ul>
+    	<ul class="m-nav">
+    		<li><a href="#"><i class="icn icn1"></i>Slide&nbsp;Show</a>
+    		<li><a href="#"><i class="icn icn2"></i>Panorama</a>
+    		<li><a href="#"><i class="icn icn3"></i>More&nbsp;Info</a>
     	</ul>
     </div>
     <div class="g-bd">
-        <div class="m-box"></div>
+        <div class="m-box">
+        	<div class="cnt" id="innerBox">
+	        	<iframe class="frm" name="contentFrame" src="//www.youtube.com/embed/Va29YFkchXo?autoplay=1" scrolling="no" frameborder="0">
+	        	</iframe>
+        	</div>
+        	<div class="ant">
+        		<a id="toggleAgentInfo" href="javascript:;" class="btn">Show Agent Info</a>
+        		<a href="#" class="vol"></a>
+        	</div>
+        	<!--
+	        <div class="btn"><a href="javascript:;" id="toggleAgentInfo">SHOW AGENT INFO</a></div>
+	       	-->
+	       	<div class="user f-cb" id="agentInfoPanel" style="display:none;">
+	       		<div class="avatar">
+	       			<img src="../static/images/default_user_man.png"}"/>
+	       		</div>
+	       		<div class="profile">
+	       			<h3>${user.realname!""}</h3>
+	       			<p>${user.telephone!""}</p>
+	       			<p>${user.company!""}</p>
+	       			<p><a href="mailto:${user.email!""}">Click here to email me</a></p>
+	       		</div>
+	       	</div>
+        </div>
     </div>
     <div class="g-ft">
           Presented by Www.flyingmaple.ca
     </div>
+	<script>
+	$("#toggleAgentInfo").click(function(){
+		$("#agentInfoPanel").slideToggle();
+	});
+	</script>
 </div>
 </body>
 </html>

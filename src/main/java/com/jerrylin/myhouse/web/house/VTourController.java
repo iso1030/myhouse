@@ -46,6 +46,70 @@ public class VTourController {
 		}
 		return new ModelAndView("/tour/vtour");
 	}
+
+	@RequestMapping(value = "/vtour/slideshow/{houseId}")
+	public ModelAndView slideshow(@PathVariable(value = "houseId") long houseId,
+			HttpServletRequest request, HttpServletResponse response, ModelMap modelMap) {
+		if (houseId <= 0) {
+			response.setStatus(HttpStatus.NOT_FOUND.value());
+			return null;
+		}
+		House house = houseService.getHouse(houseId);
+		if (house == null) {
+			response.setStatus(HttpStatus.NOT_FOUND.value());
+			return null;
+		}
+		modelMap.put("house", house);
+		return new ModelAndView("/tour/vtour/slideshow");
+	}
+
+	@RequestMapping(value = "/vtour/panorama/{houseId}")
+	public ModelAndView panorama(@PathVariable(value = "houseId") long houseId,
+			HttpServletRequest request, HttpServletResponse response, ModelMap modelMap) {
+		if (houseId <= 0) {
+			response.setStatus(HttpStatus.NOT_FOUND.value());
+			return null;
+		}
+		House house = houseService.getHouse(houseId);
+		if (house == null) {
+			response.setStatus(HttpStatus.NOT_FOUND.value());
+			return null;
+		}
+		modelMap.put("house", house);
+		return new ModelAndView("/tour/vtour/panorama");
+	}
+
+	@RequestMapping(value = "/vtour/moreinfo/{houseId}")
+	public ModelAndView moreinfo(@PathVariable(value = "houseId") long houseId,
+			HttpServletRequest request, HttpServletResponse response, ModelMap modelMap) {
+		if (houseId <= 0) {
+			response.setStatus(HttpStatus.NOT_FOUND.value());
+			return null;
+		}
+		House house = houseService.getHouse(houseId);
+		if (house == null) {
+			response.setStatus(HttpStatus.NOT_FOUND.value());
+			return null;
+		}
+		modelMap.put("house", house);
+		return new ModelAndView("/tour/vtour/moreinfo");
+	}
+
+	@RequestMapping(value = "/vtour/videotour/{houseId}")
+	public ModelAndView videotour(@PathVariable(value = "houseId") long houseId,
+			HttpServletRequest request, HttpServletResponse response, ModelMap modelMap) {
+		if (houseId <= 0) {
+			response.setStatus(HttpStatus.NOT_FOUND.value());
+			return null;
+		}
+		House house = houseService.getHouse(houseId);
+		if (house == null) {
+			response.setStatus(HttpStatus.NOT_FOUND.value());
+			return null;
+		}
+		modelMap.put("house", house);
+		return new ModelAndView("/tour/vtour/videotour");
+	}
 	
 	@RequestMapping(value = "/vtour/3d/{houseId}")
 	public ModelAndView vtour3d(@PathVariable(value = "houseId") long houseId,

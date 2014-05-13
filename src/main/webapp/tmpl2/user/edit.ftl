@@ -22,7 +22,7 @@
 		  
     	  <#if !user?exists><#assign user = {}></#if>
 		  <form class="form-horizontal" onsubmit="return false;" id="userForm" method="POST" enctype="multipart/form-data" role="form">
-		      <input type="hidden" name="id" value="${user.id?default(0)}"/>
+		      <input type="hidden" name="userId" value="${user.id?default(0)}"/>
 		      <input type="hidden" name="nickname" value="${user.nickname?default("")}"/>
 		      <input type="hidden" id="avatar" name="avatar" value="${user.avatar?default("")}"/>
 			  <div class="form-group">

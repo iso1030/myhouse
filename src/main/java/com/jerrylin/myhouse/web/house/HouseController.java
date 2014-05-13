@@ -268,6 +268,9 @@ public class HouseController {
 //			List<Image> d3imageList = fileService.getHouseImageFiles(houseId, Image.D3);
 			modelMap.put("d2images", d2images);
 			modelMap.put("d3images", d3images);
+		} else if("bgmusic".equals(subModule)) {
+			List<String> musics = fileService.getMusicList();
+			modelMap.put("musics", musics);
 		}
 		return new ModelAndView("/tour/edit");
 	}
@@ -306,6 +309,28 @@ public class HouseController {
 		return house;
 	}
 	
+	@RequestMapping(value = "/update/bgmusic", method = RequestMethod.POST, produces = MediaTypes.JSON_UTF_8)
+	@ResponseBody
+	public Map<String, Object> updateBgMusic(HttpServletRequest request, HttpServletResponse response,
+			@RequestParam(value = "id", defaultValue = "0") long houseId,
+			@RequestParam(value = "bgMusic", defaultValue = "") String bgMusic) {
+		houseService.updateHouseBgMusic(houseId, bgMusic);
+		Map<String, Object> map = new HashMap<String, Object>();
+		map.put("bgMusic", bgMusic);
+		return map;
+	}
+	
+	@RequestMapping(value = "/update/videotour", method = RequestMethod.POST, produces = MediaTypes.JSON_UTF_8)
+	@ResponseBody
+	public Map<String, Object> updateVideoTour(HttpServletRequest request, HttpServletResponse response,
+			@RequestParam(value = "id", defaultValue = "0") long houseId,
+			@RequestParam(value = "youtube", defaultValue = "") String youtube) {
+		houseService.updateHouseYoutube(houseId, youtube);
+		Map<String, Object> map = new HashMap<String, Object>();
+		map.put("youtube", youtube);
+		return map;
+	}
+	
 	@RequestMapping(value = "/delete", method = RequestMethod.DELETE, produces = MediaTypes.JSON_UTF_8)
 	@ResponseBody
 	public void delete(
@@ -334,14 +359,19 @@ public class HouseController {
 			response.setStatus(HttpStatus.NOT_FOUND.value());
 			return null;
 		}
+		Map<String, String> map = new HashMap<String, String>();
+		
 		List<Image> images = imageService.getHouseImage(houseId);
+		if (images == null || images.size() <= 0) {
+			map.put("error", "没有上传图片，不能打包");
+			return map;
+		}
 		String result = fileService.packageHouseImage(houseId, images);
 		if (result == null) {
 			response.setStatus(HttpStatus.EXPECTATION_FAILED.value());
 			return null;
 		}
 		houseService.updateHousePackUrl(houseId, result);
-		Map<String, String> map = new HashMap<String, String>();
 		map.put("url", result);
 		return map;
 	}

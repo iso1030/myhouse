@@ -5,6 +5,8 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -18,6 +20,7 @@ import net.lingala.zip4j.model.ZipParameters;
 import net.lingala.zip4j.util.Zip4jConstants;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,6 +29,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 import org.springside.modules.utils.Identities;
 
+import com.google.common.collect.Collections2;
 import com.jerrylin.myhouse.entity.Banner;
 import com.jerrylin.myhouse.entity.Image;
 import com.jerrylin.myhouse.service.AppConfigService;
@@ -382,6 +386,21 @@ public class FileService {
 			logger.warn("打包文件失败", e);
 		}
 		return null;
+	}
+	
+	public List<String> getMusicList() {
+		String baseDir = appConfigService.getBaseDir();
+		String musicDir = UrlConverter.getMusicPath();
+		File file = new File(baseDir + musicDir);
+		if (file.exists() && file.isDirectory()) {
+			String[] files = file.list();
+			List<String> musics = new ArrayList<String>();
+			for (String each : files) {
+				musics.add(musicDir + each);
+			}
+			return musics;
+		}
+		return Collections.emptyList();
 	}
 
 	

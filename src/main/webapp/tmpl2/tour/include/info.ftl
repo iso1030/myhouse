@@ -1,6 +1,6 @@
 <#escape x as x?html>
 <form class="form-horizontal" onsubmit="return false;" id="tourForm" method="POST" enctype="multipart/form-data" role="form">
-	<input type="hidden" name="id" value="${house.id!"0"}"/>
+	<input type="hidden" name="houseId" value="${house.id!"0"}"/>
   	<input type="hidden" id="coverImg" name="coverImg" value="${house.coverImg!""}"/>
   	<input type="hidden" name="uid" value="${house.uid!"0"}"/>
   	<div class="form-group">
