@@ -52,7 +52,7 @@
 		</div>
 	</div>
 	<div class="form-group">
-		<label for="company" class="col-sm-2 control-label">拍摄公司</label>
+		<label for="company" class="col-sm-2 control-label">描述</label>
 		<div class="col-sm-8">
 		  <textarea class="form-control" id="description" name="description" placeholder="less than 1000 character">${house.description!""}</textarea>
 		</div>

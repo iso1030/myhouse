@@ -2,12 +2,19 @@
 	$(document).ready(function(){
 		$("#saveBtn").click(function(){
 			var form = $("#musicForm").get(0);
+			var music = "";
+			for (var i=0,list=form.music; i<list.length; ++i) {
+				if (list[i].checked) {
+					music = list[i].value;
+					break;
+				}
+			}
 			$.ajax({
 	    	    type: 'POST',
 	    		url: '/house/update/bgmusic',
 	    		data: {
 	    			id: form.houseId.value,
-	    			bgMusic: form.music.value
+	    			bgMusic: music
 	    		},
 	    		dataType: 'json',
 	    		success: function(response){

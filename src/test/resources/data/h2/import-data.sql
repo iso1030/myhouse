@@ -1,10 +1,5 @@
 insert into mh_admin (id, login_name, name, password, salt, roles, register_date) 
 	values(1,'admin','Admin','691b14d79bf0fa2215f155235df5e670b64394cc','7efbd59d9741d34f','admin','2012-06-04 01:00:00');
-insert into mh_admin (id, login_name, name, password, salt, roles, register_date) 
-	values(2,'user','Calvin','2488aa0c31c624687bd9928e0a5d29e7d1ed520b','6d65d24122c30500','user','2012-06-04 02:00:00');
-
-insert into mh_banner (id, url, uid, create_time)
-	values(1, 'http://p3.music.126.net/nbGDU0br-epDdhswQ1jjmQ==/5683375604082858.jpg', 1, 1398606158221);
 
 insert into mh_user_account (id, type, username, password, salt)
     values(1, 1, 'qatest1', '691b14d79bf0fa2215f155235df5e670b64394cc', '7efbd59d9741d34f');
@@ -12,7 +7,7 @@ insert into mh_user_account (id, type, username, password, salt)
     values(2, 1, 'qatest2', '691b14d79bf0fa2215f155235df5e670b64394cc', '7efbd59d9741d34f');
 
 insert into mh_user_profile (id, nickname, telephone, realname, email, company, avatar, create_time)
-	values(1, 'qatest1', '057189852516', '林德', 'qatest@163.com', '', 'http://www.test.com/test.jpg', 1398606158221);
+	values(1, 'qatest1', '057189852516', '林德', 'qatest@163.com', '', '', 1398606158221);
 insert into mh_user_profile (id, nickname, telephone, realname, email, company, avatar, create_time)
 	values(2, 'qatest2', '057289858888', 'jerry lin', 'jerrylin@gmail.com', '', '', 1398606158221);
 

@@ -82,6 +82,12 @@ a,a:hover{color:#fff;}
 .m-box .ant .vol:hover{background-position:-52px -140px;}
 .m-box .ant .vol1{background-position:-104px -140px;}
 .m-box .ant .vol1:hover{background-position:-156px -140px;}
+.m-box .user{padding:10px;background-color:#faf2e3;}
+.m-box .avatar{float:left;}
+.m-box .avatar img{width:120px;height:120px;}
+.m-box .profile{margin-left:160px;line-height:24px;font-size:14px;}
+.m-box .profile a,.m-box .profile a:hover{color:#069;}
+.m-box .profile a:hover{text-decoration:underline;}
 
 .m-box1{padding:10px;background-color:#fff;color:#000;}
 .m-box1 .ttl{padding:10px;font-size:24px;font-weight:bold;}
@@ -94,12 +100,6 @@ a,a:hover{color:#fff;}
 .m-box1 .detail .lb{margin-right:15px;}
 .m-box1 .detail .open{border:1px solid #ccc;margin-top:20px;padding:10px 0 0 30px;}
 .m-box1 .detail .open img{margin-right:20px;}
-.m-box1 .user{padding:10px;background-color:#faf2e3;}
-.m-box1 .avatar{float:left;}
-.m-box1 .avatar img{width:120px;height:120px;}
-.m-box1 .profile{margin-left:160px;line-height:24px;font-size:14px;}
-.m-box1 .profile a,.m-box .profile a:hover{color:#069;}
-.m-box1 .profile a:hover{text-decoration:underline;}
 
 
 

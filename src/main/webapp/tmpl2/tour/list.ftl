@@ -40,7 +40,9 @@
 		  	    <td><#if item.userProfile?has_content>${item.userProfile.realname!""}</#if></td>
 		  	    <td>
 		  	    	<a target="_blank" href="/vtour/${item.id}" class="glyphicon glyphicon-eye-open"></a>
-		  	    	<a target="_blank" href="/download/${item.id}" class="glyphicon glyphicon-download"></a>
+		  	    	<#if item.packageUrl?has_content>
+		  	    	<a target="_blank" href="${item.packageUrl!""}" class="glyphicon glyphicon-download"></a>
+		  	    	</#if>
 		  	    </td>
 		  	    <td>${item.createTime?default(0)?number_to_date?string("yyyy-MM-dd")}</td>
 		  	    <td>

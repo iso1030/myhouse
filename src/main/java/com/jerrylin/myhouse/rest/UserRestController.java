@@ -7,7 +7,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
+import javax.servlet.ServletRequest;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Validator;
@@ -18,11 +21,13 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.ModelAndView;
 import org.springside.modules.web.MediaTypes;
 
 import com.jerrylin.myhouse.entity.House;
@@ -49,6 +54,8 @@ public class UserRestController {
 	
 	@Autowired
 	private Validator validator;
+	
+	private Pattern phonePattern = Pattern.compile("^\\d+$", Pattern.CASE_INSENSITIVE);
 
 	@RequestMapping(value = "/test",method = RequestMethod.GET, produces = MediaTypes.JSON_UTF_8)
 	public List<UserAccount> listCount() {
@@ -108,6 +115,30 @@ public class UserRestController {
 		}
 		return null;
 	}
+	
+	@RequestMapping(value = "/search", method = RequestMethod.GET, produces = MediaTypes.JSON_UTF_8)
+	public List<UserProfile> page(@RequestParam(value = "page", defaultValue = "1") int pageNumber,
+			@RequestParam(value = "page.size", defaultValue = "20") int pageSize,
+			@RequestParam(value = "query", defaultValue = "") String query) {
+		
+		pageNumber = Math.max(1, pageNumber);
+		pageSize = Math.min(20, pageSize);
+		
+		Page<UserProfile> profiles = null;
+		if (StringUtils.isNotBlank(query)) {
+			Matcher matcher = phonePattern.matcher(query);
+			if (matcher.matches())
+				profiles = userService.getUserProfilePageByPhone(pageNumber, pageSize, query);
+			else
+				profiles = userService.getUserProfilePageByName(pageNumber, pageSize, query);
+		} else {
+			profiles = userService.getUserProfilePage(pageNumber, pageSize);
+		}
+		if (profiles != null)
+			return profiles.getContent();
+		return Collections.EMPTY_LIST;
+	}
+	
 	@RequestMapping(value = "/random/filter", method = RequestMethod.GET, produces = MediaTypes.JSON_UTF_8)
 	public Page<UserProfile> randomCount() {
 		List<Long> filterIds = new ArrayList<Long>();

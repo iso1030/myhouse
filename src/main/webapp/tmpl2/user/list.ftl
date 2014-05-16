@@ -10,7 +10,7 @@
       	  </div>
       	  <div class="well">
       	  	<div class="input-group">
-      		  <input type="text" class="form-control" id="searchPhone" name="searchPhone" placeholder="Customers' phone">
+      		  <input type="text" class="form-control" id="searchPhone" name="searchPhone" placeholder="Phone or name">
       		  <span class="input-group-btn">
         		<button class="btn btn-default" type="button" id="searchBtn"><span class="glyphicon glyphicon-search"></span></button>
       		  </span>

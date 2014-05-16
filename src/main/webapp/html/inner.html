@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8"/>
+<title>House Tour</title>
+<meta name="keywords" content=""/>
+<meta name="description" content=""/>
+<link rel="stylesheet" href="/static/styles/style.css"/>
+<script src="../static/jquery/1.9.1/jquery.min.js"></script>
+<script src="../static/js/swfobject.js"></script>
+</head>
+<body>
+  <div id="ytapiplayer">
+    You need Flash player 8+ and JavaScript enabled to view this video.
+  </div>
+
+  <script type="text/javascript">
+
+    var params = { allowScriptAccess: "always" };
+    var atts = { id: "myytplayer" };
+    swfobject.embedSWF("http://www.youtube.com/v/Va29YFkchXo?enablejsapi=1&playerapiid=ytplayer&autoplay=1", 
+                       "ytapiplayer", "425", "356", "8", null, null, params, atts);
+
+  </script>
+</body>
+</html>
